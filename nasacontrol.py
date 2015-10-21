@@ -15,9 +15,6 @@ def stop(fTim, objSch):                                     # Stop the scheduler
 NasaI2C = pyb.I2C(1, pyb.I2C.SLAVE, addr=0x3E)
 # need to define control pin
 
-def set():
-
-
 
 def NASADepthThread():  # I2C, control_pin, cp_value):
     wf = Timeout(0.5)

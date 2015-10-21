@@ -89,18 +89,21 @@ DIGIT1 = [bytearray.fromhex("00 00 00 00 2e c0"),
           bytearray.fromhex("00 00 00 00 2f c0"),
           bytearray.fromhex("00 00 00 00 2d c0")]
 
+
 def receive(iic):
     try:
-        iic.recv(11)
+        data = iic.recv(11)
         return data
     except:
         return None
 
+
 def decode(data):
-    #check first five bytes of data for validity
-    #depth = False
-    #metres = False
-    #decimal_point = False
+    # check first five bytes of data for validity
+    # depth = False
+    # metres = False
+    # decimal_point = False
+
     digit1 = -1
     digit2 = -1
     digit3 = -1
@@ -108,9 +111,9 @@ def decode(data):
     if data[:5] == COMMAND:
         data = data[5:]  # strip this preamble before further processing
 
-        #check for validity and process data if valid
-        if (mask(data, DEPTH_MASK) == DEPTH_MASK
-                & mask(data, METRES_MASK) == METRES_MASK):
+        # check for validity and process data if valid
+        if (mask(data, DEPTH_MASK) == DEPTH_MASK &
+                mask(data, METRES_MASK) == METRES_MASK):
 
             digit1 = digitdecode(data, DIGIT1_MASK, DIGIT1)
             digit2 = digitdecode(data, DIGIT2_MASK, DIGIT2)
@@ -135,10 +138,10 @@ def digitdecode(data, digitmask, digitcontrol):
     return -1
 
 
-def mask(data, mask):
-    if len(data) == len(mask):
+def mask(data, msk):
+    if len(data) == len(msk):
         masked_data = bytearray()
-        for d, m in data, mask:
+        for d, m in data, msk:
             masked_data.append(d & m)
 
         return masked_data

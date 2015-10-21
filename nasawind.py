@@ -13,6 +13,7 @@ DIRECTION = {0: 246, 1: 258, 2: 252, 3: 264, 4: 240, 5: 228, 6: 234, 7: 222,
              80: 102, 81: 114, 82: 108, 83: 120, 84: 144, 85: 132, 86: 138, 87: 126,
              88: 150, 89: 168, 90: 156, 91: 174}
 
+
 def receive(iic):
     try:
         data = iic.recv(17)
@@ -20,13 +21,9 @@ def receive(iic):
     except:
         return None
 
+
 def decode(data):
     # check first five bytes of data for validity
-    # depth = False
-    # metres = False
-    decimal_point = False
-    digit1 = -1
-    digit2 = -1
 
     direction = -1
     windspeed = -1
@@ -43,35 +40,27 @@ def decode(data):
 
     return direction, windspeed
 
-
-def digitdecode(data, digitmask, digitcontrol):
-    digitdata = mask(data, digitmask)
-    for x in range(0, 10):
-        if digitdata == digitcontrol[x]:
-                    return x
-    return -1
-
-
-def mask(data, mask):
-    if len(data) == len(mask):
+def mask(data, msk):
+    if len(data) == len(msk):
         masked_data = bytearray()
-        for d, m in data, mask:
+        for d, m in data, msk:
             masked_data.append(d & m)
 
         return masked_data
 
+
 def lowestSet(int_type):
     low = int_type & -int_type
-    lowbit=-1
-    while(low):
+    lowbit = -1
+    while low:
         low >>= 1
         lowbit += 1
     return lowbit
 
+
 def bitCount(int_type):
     count = 0
-    while(int_type):
+    while int_type:
         int_type &= int_type - 1
         count += 1
-    return(count)
-
+    return count
