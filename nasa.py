@@ -1,18 +1,17 @@
-import pyb
+#import pyb
 
 
 # template class for NASA Instruments
 class NASAException(OSError):
-    '''
-    Exception for MPU devices
-    '''
-
+    # Exception for NASA devices
     pass
+
 
 class NASA:
 
     _I2Cerror = "I2C failure when communicating with NASA INSTRUMENTS"
-    def __init__(self, side_str, pin, pin_value):
+
+    def __init__(self, i2cobject=None, side_str=None, pin=None, pin_value = None):
 
         if side_str == 'X':
             side = 1
@@ -21,7 +20,12 @@ class NASA:
         else:
             side = 2
 
-        self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
+        if i2cobject is None:
+            print('init')
+            #self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
+        else:
+            print('obj')
+            self.I2C = i2cobject
         self.pin = pin
         self.pin_value = pin_value
         self.packet_size = 0

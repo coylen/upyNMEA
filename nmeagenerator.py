@@ -149,8 +149,8 @@ class DPT(NMEASentence):
 # 21) Checksum
 
 class MDA(NMEASentence):
-    def __init__(self,depth,offset):
-        self.msg="$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(depth,offset)
+    def __init__(self,pressure):
+        self.msg="$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
         super(MDA,self).__init__()
 
 

@@ -3,10 +3,11 @@
 # V0.7 25th June 2015 Adapted for new MPU9x50 interface
 
 import pyb
-from mpu9x50 import MPU9x50
+from mpu9250 import MPU9250
 from fusion import Fusion
 from usched import Sched, Poller, wait
 
+i2c_object = None
 
 def stop(fTim, objSch):                                     # Stop the scheduler after fTim seconds
     yield from wait(fTim)
@@ -47,8 +48,10 @@ class TiltCompensatedCompass:
         return self.hrp[2]
 
 
-def compassthread():
-    imu = MPU9x50('X')
+def cthread():
+    imu = MPU9250('X')
+    global i2c_object
+    i2c_object = imu._mpu_i2c
     yield from wait(0.03)                                   # Allow accelerometer to settle
     compass = TiltCompensatedCompass(imu)
     wf = Poller(compass.poll, (4,), 1)                        # Instantiate a Poller with 2 second timeout.
@@ -68,7 +71,7 @@ def test(duration=0):
     else:
         print("Output accelerometer values")
     objSched = Sched()
-    objSched.add_thread(compassthread())
+    objSched.add_thread(cthread())
     if duration:
         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
     objSched.run()
