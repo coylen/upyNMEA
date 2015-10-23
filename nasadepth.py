@@ -46,12 +46,17 @@
 # // Example depth  : 23.3
 # // Digit number   : 12.3
 
-from usched import Sched, Timeout, wait
+from nasa import NASA
+from nmeagenerator import DPT
 
-# TODO: make into class and inherent for base nasa class
 
-class NASAWind(NASA):
+class NASADepth(NASA):
 
+    def __init__(self, i2c, pin, pin_value):
+        super().__init__(i2c, pin, pin_value)
+        self.packet_size = 11
+
+    COMMAND = bytearray.fromhex("CE 80 E0 F8 70")
     DEPTH_MASK = bytearray.fromhex("01 00 00 00 00 00")
     DECPOINT_MASK = bytearray.fromhex("00 00 00 80 00 00")
     METRES_MASK = bytearray.fromhex("00 00 00 40 00 00")
@@ -92,18 +97,8 @@ class NASAWind(NASA):
               bytearray.fromhex("00 00 00 00 2f c0"),
               bytearray.fromhex("00 00 00 00 2d c0")]
 
-
-    def receive(iic):
-        try:
-            data = iic.recv(11)
-            return data
-        except:
-            return None
-
-
-    def decode(data):
+    def decode(self):
         # check first five bytes of data for validity
-        COMMAND = bytearray.fromhex("CE 80 E0 F8 70")
         # depth = False
         # metres = False
         # decimal_point = False
@@ -112,66 +107,22 @@ class NASAWind(NASA):
         digit2 = -1
         digit3 = -1
 
-        if data[:5] == COMMAND:
-            data = data[5:]  # strip this preamble before further processing
+        if self.data[:5] == self.COMMAND:
+            self.data = self.data[5:]  # strip this preamble before further processing
 
             # check for validity and process data if valid
-            if (mask(data, DEPTH_MASK) == DEPTH_MASK &
-                mask(data, METRES_MASK) == METRES_MASK):
+            if (self.mask(self.data, self.DEPTH_MASK) == self.DEPTH_MASK &
+                    self.mask(self.data, self.METRES_MASK) == self.METRES_MASK):
 
-                digit1 = digitdecode(data, DIGIT1_MASK, DIGIT1)
-                digit2 = digitdecode(data, DIGIT2_MASK, DIGIT2)
-                digit3 = digitdecode(data, DIGIT3_MASK, DIGIT3)
+                digit1 = self.digitdecode(self.data, self.DIGIT1_MASK, self.DIGIT1)
+                digit2 = self.digitdecode(self.data, self.DIGIT2_MASK, self.DIGIT2)
+                digit3 = self.digitdecode(self.data, self.DIGIT3_MASK, self.DIGIT3)
 
-            if mask(data, DECPOINT_MASK) == DECPOINT_MASK:
+            if self.mask(self.data, self.DECPOINT_MASK) == self.DECPOINT_MASK:
                 depth = max(digit1, 0)*10 + digit2 + digit3/10
             else:
                 depth = max(digit1, 0)*100 + digit2*10 + digit3
 
             if depth > 0:
+                self.output += DPT(depth, 0)
                 return depth
-            else:
-                return None
-
-
-    def digitdecode(data, digitmask, digitcontrol):
-        digitdata = mask(data, digitmask)
-        for x in range(0, 10):
-            if digitdata == digitcontrol[x]:
-                return x
-        return -1
-
-
-    def mask(data, msk):
-        if len(data) == len(msk):
-            masked_data = bytearray()
-            for d, m in data, msk:
-                masked_data.append(d & m)
-
-            return masked_data
-
-            # def NASADepthThread(I2C, control_pin, cp_value):
-            #     NASAD = NASADepth(I2C)
-            #     wf = Timeout(0.5)
-            #     while True:
-            #         control_pin.value(cp_value)  # set control pin to defined value to allow I2C read
-            #         data = NASAD.receive()
-            #         depth = NASAD.decode(data)
-            #         if depth is not None:
-            #             print(depth)
-            #         yield wf()
-            #
-            #
-            # # USER TEST PROGRAM
-            # def test(duration=0):
-            #     if duration:
-            #         print("Output Nasa Depth values for {:3d} seconds".format(duration))
-            #     else:
-            #         print("Output Nasa depth values")
-            #     objSched = Sched()
-            #     objSched.add_thread(NASADepthTestThread('a'))
-            #     if duration:
-            #         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
-            #     objSched.run()
-            #
-            # test(30)

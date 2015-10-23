@@ -1,27 +1,44 @@
 import pyb
 
+
 # template class for NASA Instruments
+class NASAException(OSError):
+    '''
+    Exception for MPU devices
+    '''
+
+    pass
+
 class NASA:
 
-    def __init__(self, i2c, pin, pin_value):
-        self.I2C = pyb.I2C(i2c, pyb.I2C.SLAVE, addr=0x3e)
+    _I2Cerror = "I2C failure when communicating with NASA INSTRUMENTS"
+    def __init__(self, side_str, pin, pin_value):
+
+        if side_str == 'X':
+            side = 1
+        elif side_str == 'Y':
+            side = 2
+        else:
+            side = 2
+
+        self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
         self.pin = pin
         self.pin_value = pin_value
         self.packet_size = 0
         self.data = []
-        self.output=""
+        self.output = ""
 
     def update(self):
-        self.recieve()
+        self.receive()
         self.decode()
         self.send()
 
-    def recieve(self):
+    def receive(self):
         # TODO: pin control to be implimented for multiple units on chip
         try:
             self.data = self.I2C.recv(self.packet_size)
-        except:
-            pass
+        except OSError:
+            raise NASAException(self._I2Cerror)
 
     # template for process function of specific class
     def decode(self):
@@ -29,7 +46,9 @@ class NASA:
 
     # standard function to write data to UART
     def send(self):
-        pass
+        # TODO: Add UART OUTPUT
+        print(self.output)
+        self.output = ''
 
     @staticmethod
     def mask(data, msk):
@@ -39,7 +58,6 @@ class NASA:
                 masked_data.append(d & m)
 
             return masked_data
-
 
     @staticmethod
     def lowestSet(int_type):
@@ -58,3 +76,10 @@ class NASA:
             count += 1
         return count
 
+    @staticmethod
+    def digitdecode(data, digitmask, digitcontrol):
+        digitdata = NASA.mask(data, digitmask)
+        for x in range(0, 10):
+            if digitdata == digitcontrol[x]:
+                return x
+        return -1
