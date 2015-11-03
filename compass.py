@@ -6,6 +6,7 @@ import pyb
 from mpu9250 import MPU9250
 from fusion import Fusion
 from usched import Sched, Poller, wait
+from nmeagenerator import HDG
 
 i2c_object = None
 
@@ -47,20 +48,24 @@ class TiltCompensatedCompass:
     def pitch(self):
         return self.hrp[2]
 
+    @property
+    def output(self):
+        return HDG(self.hrp[0])
 
-def cthread():
+def cthread(link=None):
     imu = MPU9250('X')
     global i2c_object
     i2c_object = imu._mpu_i2c
     yield from wait(0.03)                                   # Allow accelerometer to settle
     compass = TiltCompensatedCompass(imu)
-    wf = Poller(compass.poll, (4,), 1)                        # Instantiate a Poller with 2 second timeout.
+    wf = Poller(compass.poll, (4,), 1)                        # Instantiate a Poller with 1 second timeout.
     while True:
         reason = (yield wf())
-        if reason[1]:                                       # Value has changed
+        if link is None:
             print("Value heading:{:3d} roll:{:3d} pitch:{:3d}".format(compass.heading, compass.roll, compass.pitch))
-        if reason[2]:
-            print("Timeout waiting for accelerometer change")
+        else:
+            #TODO create output to serial port
+            print(compass.output)
 
 
 # USER TEST PROGRAM

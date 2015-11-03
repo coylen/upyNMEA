@@ -26,6 +26,7 @@ def rec(i2c):
 
 print("nasawind capture")
 print("")
+print("using pyboard pin X8 for pulse")
 print("first call pulse(1)")
 print("set ratio= displayed speed")
 print(" for future edit file to hardcode ratio into file")

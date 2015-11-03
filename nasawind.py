@@ -1,15 +1,12 @@
 from nasa import NASA
 from nmeagenerator import VWR
 
-a =10
 
 class NASAWind(NASA):
 
-    def __init__(self, i2cobject = None, side_str = None, pin = None, pin_value = None):
-        super().__init__(i2cobject, side_str, pin, pin_value)
+    def __init__(self, i2c_object=None, side_str=None, pin=None, pin_value=None):
+        super().__init__(i2c_object, side_str, pin, pin_value)
         self.packet_size = 17
-        global a
-        a=15
 
     COMMAND = bytearray.fromhex("C8 80 E0 F8 70")
     DIRECTION_MASK = bytearray.fromhex("0F FF 0F 0F FF F0 00 F0 F0 FF 0F FF")

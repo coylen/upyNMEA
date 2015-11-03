@@ -11,7 +11,7 @@ class NASA:
 
     _I2Cerror = "I2C failure when communicating with NASA INSTRUMENTS"
 
-    def __init__(self, i2cobject=None, side_str=None, pin=None, pin_value = None):
+    def __init__(self, i2c_object=None, side_str=None, pin=None, pin_value=None, link=None):
 
         if side_str == 'X':
             side = 1
@@ -20,17 +20,19 @@ class NASA:
         else:
             side = 2
 
-        if i2cobject is None:
+        if i2c_object is None:
             print('init')
             #self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
         else:
             print('obj')
-            self.I2C = i2cobject
+            self.I2C = i2c_object
+
         self.pin = pin
         self.pin_value = pin_value
         self.packet_size = 0
         self.data = []
         self.output = ""
+        self.link = link
 
     def update(self):
         self.receive()
@@ -51,8 +53,11 @@ class NASA:
     # standard function to write data to UART
     def send(self):
         # TODO: Add UART OUTPUT
-        print(self.output)
-        self.output = ''
+        if self.link is None:
+            print(self.output)
+            self.output = ''
+        else:
+            self.link.write(self.output)
 
     @staticmethod
     def mask(data, msk):

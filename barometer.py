@@ -18,7 +18,7 @@ def stop(fTim, objSch):                                     # Stop the scheduler
 # this allows initialisation of device using existing I2C object
 class Barometer(BMP180):
 
-    def __init__(self, i2c_object=None, side_str=None):
+    def __init__(self, i2c_object=None, side_str=None, link=None):
 
         # choose which i2c port to use
         if i2c_object is None:
@@ -36,6 +36,7 @@ class Barometer(BMP180):
         else:
             self._bmp_i2c = i2c_object
 
+        self.link=link
         _bmp_addr = self._bmp_addr
         self.chip_id = self._bmp_i2c.mem_read(2, _bmp_addr, 0xD0)
         # read calibration data from EEPROM
@@ -81,13 +82,16 @@ class Barometer(BMP180):
     # standard function to write data to UART
     def send(self):
         # TODO: Add UART OUTPUT
-        print(self.output)
-        self.output = ''
+        if self.link is None:
+            print(self.output)
+            self.output = ''
+        else:
+            self.link.write(self.output)
 
 
-def barometerthread(i2c_object=None):
-    barometer = Barometer(i2c_object)
-    wf = Timeout(60)                        # Instantiate a Poller with 2 second timeout.
+def barometerthread(i2c_object=None, link=None):
+    barometer = Barometer(i2c_object, link)
+    wf = Timeout(60)                        # Instantiate a Poller with 60 second timeout.
     while True:
         barometer.update()
         yield wf()

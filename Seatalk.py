@@ -1,9 +1,9 @@
 import pyb
 from usched import Sched, Poller, wait,Roundrobin
-
+from nmeagenerator import VHW, VLW
 
 class Seatalk:
-    def __init__(self, stream):
+    def __init__(self, stream, link=None):
         # values
         self.speedthroughwater = 0
         self.averagespeedthroughwater = 0
@@ -20,6 +20,8 @@ class Seatalk:
         self.totaltrip_changed = False
         self.status = 0
 
+        self.output= ''
+        self.link=link
         # sentences understood
         self.Decode = {32: self.Speed_through_water_20,
                         33: self.Trip_milage_21,
@@ -28,7 +30,6 @@ class Seatalk:
                         38: self.Speed_through_water_26}
         # setup uart
         self.stream = stream
-
 
     def Poll(self):
         uart_data = self.stream.readall()
@@ -61,6 +62,8 @@ class Seatalk:
                     self.status = Status.Complete
             # if status is complete
             if self.status == Status.Complete:
+                # TODO: remove temporary debug code
+                print("{:2x}".format(self.command)," ".join("{:2x}".format(a) for a in self.data))
                 self.Decode[self.command](self.data)
                 self.status = Status.Empty
         return
@@ -89,6 +92,7 @@ class Seatalk:
         if len(data) == 3:
             self.speedthroughwater = (int.from_bytes(data[:-2], byteorder='little')) / 10.0
             self.speedthroughwater_changed = True
+            self.output += VHW(self.speedthroughwater)
         return
 
 
@@ -99,6 +103,7 @@ class Seatalk:
         if len(data) == 4:
             self.trip = (int.from_bytes(data[:-3], byteorder='little')) / 100.0
             self.trip_changed = True
+            self.output += VLW(self.trip)
         return
 
 #  22  02  XX  XX  00  Total Mileage: XXXX/10 nautical miles
@@ -106,6 +111,7 @@ class Seatalk:
         if len(data) == 4:
             self.totaltrip = (int.from_bytes(data[:-3], byteorder='little')) / 10.0
             self.totaltrip_changed = True
+            self.output += "TOTAL TRIP {0]".format(self.totaltrip) # TODO: Create NMEA for this of remove
         return
 
 #  25  Z4  XX  YY  UU  VV AW  Total & Trip Log
@@ -117,6 +123,8 @@ class Seatalk:
             self.trip = (data[3] + data[4]*256 + (data[5] & 0x0F)*4096) / 100
             self.trip_changed = True
             self.totaltrip_changed = True
+            self.output += VLW(self.trip)
+            self.output += "TOTAL TRIP {0]".format(self.totaltrip) # TODO: Create NMEA for this of remove
         return
 
 #  26  04  XX  XX  YY  YY DE  Speed through water:
@@ -132,6 +140,7 @@ class Seatalk:
             self.averagespeedthroughwater = (int.from_bytes(data[3:5], byteorder='little')) / 100
             self.speedthroughwater_changed = True
             self.averagespeedthroughwater_changed = True
+            self.output += VHW(self.speedthroughwater)
         return
 
 
@@ -150,7 +159,8 @@ def seatalkthread():
     while True:
         reason = (yield wf())
         if reason[1]:
-            print("speed changed event")
+            print(st.output)
+            st.output = ''
             st.speedthroughwater_changed = False
         if reason[2]:
             print("time out event")

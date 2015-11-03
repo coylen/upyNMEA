@@ -10,18 +10,19 @@ from barometer import barometerthread
 import pyb
 
 def run():
+    # setup uart object to pass
+    output = pyb.UART(1, 4800)
 
-    #generate objects
-    compassthread = compass.cthread()
+    # generate objects
+    compassthread = compass.cthread(link=output)
     mpu_i2c = compass.i2c_object
 
-    #setup uart object to pass
 
     objSched=Sched()
-    objSched.add_thread(seatalkthread())
+#    objSched.add_thread(seatalkthread())
     objSched.add_thread(compassthread())
-    objSched.add_thread(NASAWindThread())
-    objSched.add_thread(NASADepthThread())
+#    objSched.add_thread(NASAWindThread())
+#    objSched.add_thread(NASADepthThread())
     objSched.add_thread(barometerthread(i2c_object=mpu_i2c))
     objSched.run()
 
