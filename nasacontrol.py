@@ -40,6 +40,5 @@ def test(duration=0):
         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
     objSched.run()
 
-test(30)
+#test(30)
 
-class

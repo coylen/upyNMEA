@@ -1,11 +1,11 @@
 import pyb
 
-ratio = 1
+ratio = 2.4
 
 
 def pulse(frq):
     timer = pyb.Timer(14, freq=frq)
-    ch2 = timer.channel(1, pyb.Timer.PWM, pin=pyb.Pin.board.X8, pulse_width=(timer.period+1)*frq/100)
+    ch2 = timer.channel(1, pyb.Timer.PWM, pin=pyb.Pin.board.X8, pulse_width=int((timer.period()+1)*frq/100))
 
 
 def speed(knots):
@@ -19,7 +19,8 @@ def setup():
 
 def rec(i2c):
     try:
-        i2c.recv(17)
+        b=i2c.recv(17)
+        print(b)
     except:
         print("FAIL")
 

@@ -20,6 +20,8 @@ class TiltCompensatedCompass:
     def __init__(self, imu):
         self.imu = imu
         self.fuse = Fusion()
+        self.fuse.magbias=(36.24346, -20.19404, 20.11992) #based on benchtest
+        self.fuse.scalebias=(0.969, 0.951, 1.080)
         self.update()
         self.hrp = [self.fuse.heading, self.fuse.roll, self.fuse.pitch]
 
@@ -35,6 +37,15 @@ class TiltCompensatedCompass:
         gyro = self.imu.gyro.xyz
         mag = self.imu.mag.xyz
         self.fuse.update(accel, gyro, mag)
+
+    def getmag(self):
+        return self.imu.mag.xyz
+
+    def Calibrate(self):
+        print("Calibrating. Press switch when done.")
+        sw = pyb.Switch()
+        self.fuse.calibrate(self.getmag, sw, lambda : pyb.delay(100))
+        print(self.fuse.magbias)
 
     @property
     def heading(self):
@@ -62,11 +73,15 @@ def cthread(link=None):
     while True:
         reason = (yield wf())
         if link is None:
-            print("Value heading:{:3d} roll:{:3d} pitch:{:3d}".format(compass.heading, compass.roll, compass.pitch))
+            print("Value heading:{:3f} roll:{:3f} pitch:{:3f}".format(compass.heading, compass.roll, compass.pitch))
         else:
             #TODO create output to serial port
-            print(compass.output)
+            print(compass.output.msg)
 
+def usertest():
+    imu=MPU9250('X')
+    c=TiltCompensatedCompass(imu)
+    c.Calibrate()
 
 # USER TEST PROGRAM
 
@@ -81,7 +96,7 @@ def test(duration=0):
         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
     objSched.run()
 
-test(30)
+#test(30)
 
 # imu = MPU9150('X')
 #

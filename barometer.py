@@ -76,22 +76,24 @@ class Barometer(BMP180):
         self.output = ''
 
     def update(self):
-        self.output = MDA(self.pressure // 1000)
+        self.output = MDA(self.pressure // 100)
         self.send()
 
     # standard function to write data to UART
     def send(self):
         # TODO: Add UART OUTPUT
         if self.link is None:
-            print(self.output)
+            print(self.output.msg)
             self.output = ''
         else:
             self.link.write(self.output)
 
 
-def barometerthread(i2c_object=None, link=None):
-    barometer = Barometer(i2c_object, link)
-    wf = Timeout(60)                        # Instantiate a Poller with 60 second timeout.
+def barometerthread(i2c_object=None, side_str=None, link=None):
+    if i2c_object is None:
+        side_str='X'
+    barometer = Barometer(i2c_object,side_str, link)
+    wf = Timeout(6)                        # Instantiate a Poller with 60 second timeout.
     while True:
         barometer.update()
         yield wf()
@@ -110,4 +112,4 @@ def test(duration=0):
         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
     objSched.run()
 
-test(30)
+#test(30)

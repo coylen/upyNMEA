@@ -8,8 +8,8 @@ class NASAWind(NASA):
         super().__init__(i2c_object, side_str, pin, pin_value)
         self.packet_size = 17
 
-    COMMAND = bytearray.fromhex("C8 80 E0 F8 70")
-    DIRECTION_MASK = bytearray.fromhex("0F FF 0F 0F FF F0 00 F0 F0 FF 0F FF")
+    COMMAND = bytes(b'\xC8\x80\xE0\xF8\x70')
+    DIRECTION_MASK = bytes(b'\x0F\xFF\x0F\x0F\xFF\xF0\x00\xF0\xF0\xFF\x0F\xFF')
     DIRECTION = {0: 246, 1: 258, 2: 252, 3: 264, 4: 240, 5: 228, 6: 234, 7: 222,
                  8: 288, 9: 276, 10: 282, 11: 270,
                  16: 294, 17: 306, 18: 300, 19: 312, 20: 336, 21: 324, 22: 330, 23: 318,

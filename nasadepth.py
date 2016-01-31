@@ -56,46 +56,47 @@ class NASADepth(NASA):
         super().__init__(i2c, pin, pin_value)
         self.packet_size = 11
 
-    COMMAND = bytearray.fromhex("CE 80 E0 F8 70")
-    DEPTH_MASK = bytearray.fromhex("01 00 00 00 00 00")
-    DECPOINT_MASK = bytearray.fromhex("00 00 00 80 00 00")
-    METRES_MASK = bytearray.fromhex("00 00 00 40 00 00")
-    DIGIT1_MASK = bytearray.fromhex("00 00 00 00 2F C0")
-    DIGIT2_MASK = bytearray.fromhex("FE 00 00 00 00 00")
-    DIGIT3_MASK = bytearray.fromhex("00 BF 00 00 00 00")
+    COMMAND = bytes(b'\xCE\x80\xE0\xF8\x70')
+    DEPTH_MASK = bytes(b'\x01\x00\x00\x00\x00\x00')
+    DECPOINT_MASK = bytes(b'\x00\x00\x00\x80\x00\x00')
+    METRES_MASK = bytes(b'\x00\x00\x00\x40\x00\x00')
+    DIGIT1_MASK = bytes(b'\x00\x00\x00\x00\x2F\xC0')
+    DIGIT2_MASK = bytes(b'\xFE\x00\x00\x00\x00\x00')
+    DIGIT3_MASK = bytes(b'\x00\xBF\x00\x00\x00\x00')
 
-    DIGIT3 = [bytearray.fromhex("00 bb 00 00 00 00"),
-              bytearray.fromhex("00 11 00 00 00 00"),
-              bytearray.fromhex("00 9e 00 00 00 00"),
-              bytearray.fromhex("00 97 00 00 00 00"),
-              bytearray.fromhex("00 35 00 00 00 00"),
-              bytearray.fromhex("00 a7 00 00 00 00"),
-              bytearray.fromhex("00 af 00 00 00 00"),
-              bytearray.fromhex("00 91 00 00 00 00"),
-              bytearray.fromhex("00 bf 00 00 00 00"),
-              bytearray.fromhex("00 b7 00 00 00 00")]
+    DIGIT3 = [bytes(b'\x00\xBB\x00\x00\x00\x00'),
+              bytes(b'\x00\x11\x00\x00\x00\x00'),
+              bytes(b'\x00\x9E\x00\x00\x00\x00'),
+              bytes(b'\x00\x97\x00\x00\x00\x00'),
+              bytes(b'\x00\x35\x00\x00\x00\x00'),
+              bytes(b'\x00\xA7\x00\x00\x00\x00'),
+              bytes(b'\x00\xAF\x00\x00\x00\x00'),
+              bytes(b'\x00\x91\x00\x00\x00\x00'),
+              bytes(b'\x00\xBF\x00\x00\x00\x00'),
+              bytes(b'\x00\xB7\x00\x00\x00\x00')]
 
-    DIGIT2 = [bytearray.fromhex("ee 00 00 00 00 00"),
-              bytearray.fromhex("44 00 00 00 00 00"),
-              bytearray.fromhex("b6 00 00 00 00 00"),
-              bytearray.fromhex("d6 00 00 00 00 00"),
-              bytearray.fromhex("5c 00 00 00 00 00"),
-              bytearray.fromhex("da 00 00 00 00 00"),
-              bytearray.fromhex("fa 00 00 00 00 00"),
-              bytearray.fromhex("46 00 00 00 00 00"),
-              bytearray.fromhex("fe 00 00 00 00 00"),
-              bytearray.fromhex("de 00 00 00 00 00")]
+    DIGIT2 = [bytes(b'\xEE\x00\x00\x00\x00\x00'),
+              bytes(b'\x44\x00\x00\x00\x00\x00'),
+              bytes(b'\xB6\x00\x00\x00\x00\x00'),
+              bytes(b'\xD6\x00\x00\x00\x00\x00'),
+              bytes(b'\x5C\x00\x00\x00\x00\x00'),
+              bytes(b'\xDA\x00\x00\x00\x00\x00'),
+              bytes(b'\xFA\x00\x00\x00\x00\x00'),
+              bytes(b'\x46\x00\x00\x00\x00\x00'),
+              bytes(b'\xFE\x00\x00\x00\x00\x00'),
+              bytes(b'\xDE\x00\x00\x00\x00\x00')]
 
-    DIGIT1 = [bytearray.fromhex("00 00 00 00 2e c0"),
-              bytearray.fromhex("00 00 00 00 04 40"),
-              bytearray.fromhex("00 00 00 00 27 80"),
-              bytearray.fromhex("00 00 00 00 25 c0"),
-              bytearray.fromhex("00 00 00 00 0d 40"),
-              bytearray.fromhex("00 00 00 00 29 c0"),
-              bytearray.fromhex("00 00 00 00 2b c0"),
-              bytearray.fromhex("00 00 00 00 24 40"),
-              bytearray.fromhex("00 00 00 00 2f c0"),
-              bytearray.fromhex("00 00 00 00 2d c0")]
+    DIGIT1 = [bytes(b'\x00\x00\x00\x00\x2E\xc0'),
+              bytes(b'\x00\x00\x00\x00\x04\x40'),
+              bytes(b'\x00\x00\x00\x00\x27\x80'),
+              bytes(b'\x00\x00\x00\x00\x25\xC0'),
+              bytes(b'\x00\x00\x00\x00\x0D\x40'),
+              bytes(b'\x00\x00\x00\x00\x29\xC0'),
+              bytes(b'\x00\x00\x00\x00\x2B\xC0'),
+              bytes(b'\x00\x00\x00\x00\x24\x40'),
+              bytes(b'\x00\x00\x00\x00\x2F\xC0'),
+              bytes(b'\x00\x00\x00\x00\x2D\xC0')]
+
 
     def decode(self):
         # check first five bytes of data for validity
