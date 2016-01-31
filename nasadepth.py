@@ -112,7 +112,7 @@ class NASADepth(NASA):
             self.data = self.data[5:]  # strip this preamble before further processing
 
             # check for validity and process data if valid
-            if (self.mask(self.data, self.DEPTH_MASK) == self.DEPTH_MASK &
+            if (self.mask(self.data, self.DEPTH_MASK) == self.DEPTH_MASK and
                     self.mask(self.data, self.METRES_MASK) == self.METRES_MASK):
 
                 digit1 = self.digitdecode(self.data, self.DIGIT1_MASK, self.DIGIT1)

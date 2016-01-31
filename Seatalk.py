@@ -1,5 +1,5 @@
-##import pyb
-##from usched import Sched, Poller, wait,Roundrobin
+import pyb
+from usched import Sched, Poller, wait,Roundrobin
 from nmeagenerator import VHW, VLW
 
 class Seatalk:

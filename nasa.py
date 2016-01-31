@@ -1,4 +1,4 @@
-#import pyb
+import pyb
 
 
 # template class for NASA Instruments
@@ -22,7 +22,7 @@ class NASA:
 
         if i2c_object is None:
             print('init')
-            #self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
+            self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
         else:
             print('obj')
             self.I2C = i2c_object

@@ -1,23 +1,25 @@
-#Python classes to generate NMEA sentences
-#based on Pynmea by Becky Lewis but simplified as only limited number of sentences to be created
-#sentences include:
-#Speed through water VHW
-#Trip distance VLW
-#Heading HDG
-#Wind VWR
-#Depth DBT/DPT
-#Barometric pressure MDA
-#Timestamp ZDA
+# Python classes to generate NMEA sentences
+# based on Pynmea by Becky Lewis but simplified as only limited number of sentences to be created
+# sentences include:
+# Speed through water VHW
+# Trip distance VLW
+# Heading HDG
+# Wind VWR
+# Depth DBT/DPT
+# Barometric pressure MDA
+# Timestamp ZDA
 #
-#Talker definition will be UP - microprocessor controller
+# Talker definition will be UP - microprocessor controller
 
-#Base NMEA Sentence Class
+# Base NMEA Sentence Class
 # used to append checksums in
 # sentence generation to avoid repetition
+
+
 class NMEASentence:
     def __init__(self):
-        str=checksum_calc(self.msg)
-        self.msg+="*"+str
+        str = checksum_calc(self.msg)
+        self.msg += "*" + str
 
 # VHW Water Speed and Heading
 #         1  2  3  4   5 6  7  8 9
@@ -33,9 +35,10 @@ class NMEASentence:
 # 8) K = Kilometres
 # 9) Checksum
 
+
 class VHW(NMEASentence):
     def __init__(self, STW):
-        self.msg="$UPVHW,,,,,{0},N,,".format(STW)
+        self.msg = "$UPVHW,,,,,{0},N,,".format(STW)
   #      str=checksum_calc(self.msg)
    #     self.msg+="*"+str
         super(VHW,self).__init__()
@@ -50,9 +53,10 @@ class VHW(NMEASentence):
 # 4) N = Nautical Miles
 # 5) Checksum
 
+
 class VLW(NMEASentence):
     def __init__(self,distance_since_reset):
-        self.msg="$UPVLW,,,{0},N".format(distance_since_reset)
+        self.msg = "$UPVLW,,,{0},N".format(distance_since_reset)
         super(VLW,self).__init__()
 
 
@@ -67,9 +71,10 @@ class VLW(NMEASentence):
 # 5) Magnetic Variation direction, E = Easterly, W = Westerly
 # 6) Checksum
 
+
 class HDG(NMEASentence):
     def __init__(self,degree_magnetic):
-        self.msg="$UPHDG,{0},1.25,W,,".format(degree_magnetic)
+        self.msg = "$UPHDG,{0},1.25,W,,".format(degree_magnetic)
         super(HDG,self).__init__()
 
 
@@ -87,10 +92,11 @@ class HDG(NMEASentence):
 # 8) K = Kilometers Per Hour
 # 9) Checksum
 
+
 class VWR(NMEASentence):
-    def __init__(self,wind_angle,left_right,wind_speed_K):
-        self.msg="$UPVWR,{0},{1},{2},N,,,,".format(wind_angle,left_right,wind_speed_K)
-        super(VWR,self).__init__()
+    def __init__(self, wind_angle, left_right, wind_speed_K):
+        self.msg = "$UPVWR,{0},{1},{2},N,,,,".format(wind_angle, left_right, wind_speed_K)
+        super(VWR, self).__init__()
 
 
 # DPT Depth of Water
@@ -103,10 +109,11 @@ class VWR(NMEASentence):
 #  negative means distance from transducer to keel
 # 3) Checksum
 
+
 class DPT(NMEASentence):
-    def __init__(self,depth,offset):
-        self.msg="$UPDPT,{0},{1}".format(depth,offset)
-        super(DPT,self).__init__()
+    def __init__(self, depth, offset):
+        self.msg = "$UPDPT,{0},{1}".format(depth, offset)
+        super(DPT, self).__init__()
 
 
 # ZDA Time & Date – UTC, Day, Month, Year and Local Time Zone
@@ -149,10 +156,9 @@ class DPT(NMEASentence):
 # 21) Checksum
 
 class MDA(NMEASentence):
-    def __init__(self,pressure):
-        self.msg="$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
-        super(MDA,self).__init__()
-
+    def __init__(self, pressure):
+        self.msg = "$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
+        super(MDA, self).__init__()
 
 
 def checksum_calc(nmea_str):
@@ -166,5 +172,3 @@ def checksum_calc(nmea_str):
         chksum_val ^= ord(next_char)
 
     return "%02X" % chksum_val
-
-
