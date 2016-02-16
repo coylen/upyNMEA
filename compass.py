@@ -44,7 +44,7 @@ class TiltCompensatedCompass:
     def Calibrate(self):
         print("Calibrating. Press switch when done.")
         sw = pyb.Switch()
-        self.fuse.calibrate(self.getmag, sw, lambda : pyb.delay(100))
+        self.fuse.calibrate(self.getmag, sw, lambda: pyb.delay(100))
         print(self.fuse.magbias)
 
     @property
@@ -62,6 +62,7 @@ class TiltCompensatedCompass:
     @property
     def output(self):
         return HDG(self.hrp[0])
+
 
 def cthread(link=None):
     imu = MPU9250('X')
@@ -96,11 +97,26 @@ def test(duration=0):
         objSched.add_thread(stop(duration, objSched))           # Run for a period then stop
     objSched.run()
 
+import compy
+def compare():
+    imu=MPU9250('X')
+    hml=compy.compass(2)
+    hml.setDeclination(0)
+    hml.setContinuousMode()
+    print("Calibrating. Press switch when done.")
+    sw = pyb.Switch()
+#    self.fuse.calibrate(self.getmag, sw, lambda : pyb.delay(100))
+#    print(self.fuse.magbias)
+
+    while not sw():
+        print("{0},{1}".format(imu.mag.xyz,hml.getAxes()))
+
 #test(30)
 
 # imu = MPU9150('X')
 #
 # fuse = Fusion()
+#
 #
 # # Choose test to run
 # Calibrate = True
