@@ -160,6 +160,11 @@ class MDA(NMEASentence):
         self.msg = "$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
         super(MDA, self).__init__()
 
+#temporary class to allow saving of compass data which is sent to unit as blob
+class CMP(NMEASentence):
+    def __init__(self, data):
+        self.msg = "$MYCMP,{0}".format(data)
+        super(CMP, self).__init__()
 
 def checksum_calc(nmea_str):
     """ Loop through all of the given characters and xor the current to the

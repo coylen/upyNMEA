@@ -13,7 +13,7 @@ def run():
     # setup uart object to pass
   #  output = pyb.UART(1, 4800)
     # generate objects
-    compassthread = compass.cthread()#link=output)
+    compassthread = compass.cthreaddev()#link=output)
     mpu_i2c = compass.i2c_object
     pyb.delay(100)
 

@@ -97,7 +97,6 @@ class NASADepth(NASA):
               bytes(b'\x00\x00\x00\x00\x2F\xC0'),
               bytes(b'\x00\x00\x00\x00\x2D\xC0')]
 
-
     def decode(self):
         # check first five bytes of data for validity
         # depth = False
