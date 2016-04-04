@@ -19,7 +19,7 @@
 class NMEASentence:
     def __init__(self):
         str = checksum_calc(self.msg)
-        self.msg += "*" + str
+        self.msg += "*" + str +"\r\n"
 
 # VHW Water Speed and Heading
 #         1  2  3  4   5 6  7  8 9
@@ -164,6 +164,11 @@ class MDA(NMEASentence):
 class CMP(NMEASentence):
     def __init__(self, data):
         self.msg = "$MYCMP,{0}".format(data)
+        super(CMP, self).__init__()
+
+class ERR(NMEASentence):
+    def __init__(self, data):
+        self.msg = "$MYERR,{0}".format(data)
         super(CMP, self).__init__()
 
 def checksum_calc(nmea_str):

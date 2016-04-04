@@ -88,7 +88,6 @@ class Barometer(BMP180):
         else:
             self.link.write(self.output)
 
-
 def barometerthread(i2c_object=None, side_str=None, link=None):
     if i2c_object is None:
         side_str='X'

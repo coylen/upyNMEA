@@ -1,9 +1,9 @@
 import pyb
 from usched import Sched, Poller, wait,Roundrobin
-from nmeagenerator import VHW, VLW
+from nmeagenerator import VHW, VLW, ERR
 
 class Seatalk:
-    def __init__(self, stream, link=None):
+    def __init__(self, stream):
         # values
         self.speedthroughwater = 0
         self.averagespeedthroughwater = 0
@@ -14,34 +14,32 @@ class Seatalk:
         self.command = 0
         self.length = 0
         # flags
-        self.speedthroughwater_changed = False
-        self.averagespeedthroughwater_changed = False
-        self.trip_changed = False
-        self.totaltrip_changed = False
-        self.status = 0
+        # self.speedthroughwater_changed = False
+        # self.averagespeedthroughwater_changed = False
+        # self.trip_changed = False
+        # self.totaltrip_changed = False
+        self.status = Status.Empty
 
-        self.output = ''
-        self.link = link
+        self.output = []
         # sentences understood
         self.Decode = {32: self.Speed_through_water_20,
-                        33: self.Trip_milage_21,
-                        34: self.Total_milage_22,
-                        37: self.Total_and_trip_25,
-                        38: self.Speed_through_water_26}
+                       33: self.Trip_milage_21,
+                       34: self.Total_milage_22,
+                       37: self.Total_and_trip_25,
+                       38: self.Speed_through_water_26}
         # setup uart
         self.stream = stream
 
-    def Poll(self):
+    def Poll(self, dummy):
         if self.stream.any():
-            uart_data = self.stream.read(2) #all()
-            self.Process(uart_data)
-        if self.speedthroughwater_changed:
-            return 1
+            uart_data = self.stream.read(2)
+            if self.Process(uart_data):
+                return 1
         return None
 
     def Process(self, data):
         # loop while data available
-        x=0
+        x = 0
         while len(data) > x+1:
             newdata = data[x]
             parity = data[x+1]
@@ -52,31 +50,33 @@ class Seatalk:
                 self.command = newdata
                 self.data = []
                 self.status = Status.Command
+
             # if on command status check for length
             elif self.status == Status.Command and self.paritycheck(parity) == False:
                 self.data.append(newdata)
                 self.length = (newdata & 0x0F) + 1
                 self.status = Status.Length
+
             # if on length status collect data to match length
             elif self.status == Status.Length and self.paritycheck(parity) == False:
                 self.data.append(newdata)
                 self.length -= 1
-            # if length is achieved mark as complete
+                # if length is achieved mark as complete
                 if self.length == 0:
                     self.status = Status.Complete
+
             # if status is complete
             if self.status == Status.Complete:
-                # TODO: remove temporary debug code
-                print("{:2x}".format(self.command)," ".join("{:2x}".format(a) for a in self.data))
+                out = ''
                 try:
-                    self.Decode[self.command](self.data)
-                                  ##print
-                    print(self.output)
-                    self.output=''
+                    out = self.Decode[self.command](self.data)
                 except:
-                    print("command not recognised")
-                self.status = Status.Empty
-        return
+                    out = ERR("SEATALK SENTENCE NOT RECOGNISED").msg
+                finally:
+                    self.output.append(out)
+                    self.status = Status.Empty
+                    return True
+        return False
 
     @staticmethod
     def paritycheck(byte):
@@ -84,15 +84,6 @@ class Seatalk:
             return True
         else:
             return False
-#    def Read
-
-    # def isvalid(self, commandbytes):
-    #     #check parity bit is correct
-    #
-    #     # check command is known
-    #
-    #     return True
-
 
 # Decode sections
 
@@ -101,9 +92,9 @@ class Seatalk:
     def Speed_through_water_20(self, data):
         if len(data) == 3:
             self.speedthroughwater = (int.from_bytes(data[-2:], byteorder='little')) / 10.0
-            self.speedthroughwater_changed = True
-            self.output += VHW(self.speedthroughwater).msg
-        return
+            # self.speedthroughwater_changed = True
+            return VHW(self.speedthroughwater).msg
+        return ERR('ST 20 incorrect length: {}'.format(len(data))).msg
 
 
 #  21  02  XX  XX  0X  Trip Mileage: XXXXX/100 nautical miles
@@ -112,17 +103,17 @@ class Seatalk:
     def Trip_milage_21(self, data):
         if len(data) == 4:
             self.trip = (int.from_bytes(data[-3:], byteorder='little')) / 100.0
-            self.trip_changed = True
-            self.output += VLW(self.trip).msg
-        return
+            # self.trip_changed = True
+            return VLW(self.trip).msg
+        return ERR('ST 21 incorrect length: {}'.format(len(data))).msg
 
 #  22  02  XX  XX  00  Total Mileage: XXXX/10 nautical miles
     def Total_milage_22(self, data):
         if len(data) == 4:
             self.totaltrip = (int.from_bytes(data[-3:], byteorder='little')) / 10.0
-            self.totaltrip_changed = True
-            self.output += "TOTAL TRIP {0}".format(self.totaltrip)# TODO: Create NMEA for this of remove
-        return
+            # self.totaltrip_changed = True
+            return "TOTAL TRIP {0}".format(self.totaltrip)# TODO: Create NMEA for this of remove
+        return ERR('ST 22 incorrect length: {}'.format(len(data))).msg
 
 #  25  Z4  XX  YY  UU  VV AW  Total & Trip Log
 #                      total= (XX+YY*256+Z* 4096)/ 10 [max=104857.5] nautical miles
@@ -131,11 +122,11 @@ class Seatalk:
         if len(data) == 6:
             self.totaltrip = (data[1] + data[2]*256 + (data[0] >> 4)*4096) / 10
             self.trip = (data[3] + data[4]*256 + (data[5] & 0x0F)*4096) / 100
-            self.trip_changed = True
-            self.totaltrip_changed = True
-            self.output += VLW(self.trip).msg
-            self.output += "TOTAL TRIP {0}".format(self.totaltrip) # TODO: Create NMEA for this of remove
-        return
+            # self.trip_changed = True
+            # self.totaltrip_changed = True
+            return VLW(self.trip).msg
+# TODO:            self.output += "TOTAL TRIP {0}".format(self.totaltrip) # TODO: Create NMEA for this of remove
+        return ERR('ST 25 incorrect length: {}'.format(len(data))).msg
 
 #  26  04  XX  XX  YY  YY DE  Speed through water:
 #                      XXXX/100 Knots, sensor 1, current speed, valid if D&4=4
@@ -148,10 +139,10 @@ class Seatalk:
         if len(data) == 6:
             self.speedthroughwater = (int.from_bytes(data[1:3], byteorder='little')) / 100
             self.averagespeedthroughwater = (int.from_bytes(data[3:5], byteorder='little')) / 100
-            self.speedthroughwater_changed = True
-            self.averagespeedthroughwater_changed = True
-            self.output += VHW(self.speedthroughwater).msg
-        return
+            # self.speedthroughwater_changed = True
+            # self.averagespeedthroughwater_changed = True
+            return VHW(self.speedthroughwater).msg
+        return ERR('ST 26 incorrect length: {}'.format(len(data))).msg
 
 
 class Status:
@@ -161,55 +152,69 @@ class Status:
     Complete = 3
 
 
-def seatalkthread():
+def seatalkthread(out_buff):
     stream = pyb.UART(1, 4800, bits=9)
-    yield from wait(0.5)
+    yield 0.5
     st = Seatalk(stream)
-    wf = Poller(st.Poll, 1)
+    wf = Poller(st.Poll,(4,), 5)
     while True:
         reason = (yield wf())
         if reason[1]:
-            print(st.output)
-            st.output = ''
-            st.speedthroughwater_changed = False
+            out_buff.write(st.output)
+            st.output = []
         if reason[2]:
-            print("time out event")
+            out_buff.write(ERR('ST DATA TIMEOUT').msg)
 
 
-def stop(fTim, objSch):
-    yield from wait(fTim)
-    objSch.stop()
-
-
-def testprocess(duration=0):
-    stream = pyb.UART(1, 4800, bits=9)
-    st=Seatalk(stream)
-    while True:
-        st.Poll()
-
-def test(duration=0):
-    if duration:
-        print("capture seatalk data for {:3d} seconds".format(duration))
-    else:
-        print("Capture seatalk data")
-    objSched = Sched()
-    objSched.add_thread(seatalkthread())
-    if duration:
-        objSched.add_thread(stop(duration, objSched))
-    objSched.run()
+# def stop(fTim, objSch):
+#     yield from wait(fTim)
+#     objSch.stop()
 #
-# test(30)
+#
+# def testprocess(duration=0):
+#     stream = pyb.UART(1, 4800, bits=9)
+#     st=Seatalk(stream)
+#     while True:
+#         st.Poll()
+#
+# def test(duration=0):
+#     if duration:
+#         print("capture seatalk data for {:3d} seconds".format(duration))
+#     else:
+#         print("Capture seatalk data")
+#     objSched = Sched()
+#     objSched.add_thread(seatalkthread())
+#     if duration:
+#         objSched.add_thread(stop(duration, objSched))
+#     objSched.run()
+# #
+# # test(30)
+#
+# def basic():
+#      stream = pyb.UART(1, 4800, bits=9)
+#      while True:
+#          while stream.any():
+#              dat=stream.read(2)
+#              print("{0}  {1}".format(dat[0],dat[1]))
+#              if dat[1]==1 and dat[0]<27:
+#                  print('EUREKA')
+#
+# print('seatalk test suite')
+# print(' basic() to show data recieving')
+# print(' testprocess() to check process')
+# print('test to test scheduling')
+#
+# class log:
+#     def __init__(self, stream, link=None):
+#         pass
+#
+#     def load(self):
+#         pass
+#
+#     def save(self):
+#         pass
+#
+#     def update(self):
+#         pass
+#
 
-def basic():
-     stream = pyb.UART(1, 4800, bits=9)
-     while True:
-         while stream.any():
-             dat=stream.read(2)
-             print("{0}  {1}".format(dat[0],dat[1]))
-             if dat[1]==1 and dat[0]<27:
-                 print('EUREKA')
-
-print('seatalk test suite')
-print(' basic() to show data recieving')
-print(' testprocess() to check process')
-print('test to test scheduling')
