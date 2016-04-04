@@ -8,6 +8,8 @@ from fusion import Fusion
 from usched import Sched, Poller, wait
 from nmeagenerator import HDG, CMP
 import compy
+import LSM303
+import pickle
 i2c_object = None
 
 def stop(fTim, objSch):                                     # Stop the scheduler after fTim seconds
@@ -19,13 +21,19 @@ class TiltCompensatedCompass:
 
     def __init__(self, imu, hmc_side=2):
         self.imu = imu
-        self.hml=compy.compass(hmc_side)
+#        self.hml=compy.compass(hmc_side)
+#        self.hml.setDeclination(0)
+#        self.hml.setContinuousMode()
+        self.hml=LSM303.TiltCompCompass(hmc_side)
         self.hml.setDeclination(0)
         self.hml.setContinuousMode()
+        self.gyrobias=(-1.394046, 1.743511, 0.4735878)
         self.fuse = Fusion()
-        self.fuse.magbias=(34.56797,3.350976,-12.27656) #based on benchtest
+        self.fuse.magbias=(43.6694, -1.2140, 32.3375) #based on benchtest
         self.fuse.scalebias=(1,1,1)
         self.fuseh = Fusion()#TODO: temp for comparison
+#        self.fuseh.magbias=(-19.397,-71.753,33.872)
+        self.fuseh.magbias=(-4.8839,30.7156,5.1349)
         self.fuseh.scalebias=(1,1,1)#TODO: temp for comparison
         self.update()
         self.hrp = [self.fuse.heading, self.fuse.roll, self.fuse.pitch]
@@ -39,7 +47,10 @@ class TiltCompensatedCompass:
 
     def update(self):
         accel = self.imu.accel.xyz
-        gyro = self.imu.gyro.xyz
+        gyroraw = self.imu.gyro.xyz
+
+        gyro = [gyroraw[0] - self.gyrobias[0], gyroraw[1] - self.gyrobias[1], gyroraw[2] - self.gyrobias[2]]
+
         self.mag = self.imu.mag.xyz        #TODO: global for temp calibration
         self.magh = self.hml.getAxes()     #TODO: temp for comparison
         self.fuse.update(accel, gyro, self.mag)
@@ -53,6 +64,129 @@ class TiltCompensatedCompass:
         sw = pyb.Switch()
         self.fuse.calibrate(self.getmag, sw, lambda: pyb.delay(100))
         print(self.fuse.magbias)
+
+    def gyrocal(self):
+        xa=0
+        ya=0
+        za=0
+        for x in range(0,100):
+            xyz=self.imu.gyro.xyz
+            xa+=xyz[0]
+            ya+=xyz[1]
+            za+=xyz[2]
+            pyb.delay(1000)
+        print(xa/100,ya/100,za/100)
+
+    def view(self):
+        while True:
+            self.update()
+            print("{0}    {1}".format(self.fuse.heading,self.fuseh.heading))
+
+    @property
+    def heading(self):
+        return self.hrp[0]
+
+    @property
+    def roll(self):
+        return self.hrp[1]
+
+    @property
+    def pitch(self):
+        return self.hrp[2]
+
+    @property
+    def output(self):
+    #    return HDG(self.hrp[0])
+        return CMP("{},{},{},{}".format(self.mag,self.hrp[0],self.magh,self.fuseh.heading))
+
+
+class TCCompass:
+
+    def __init__(self, imu, hmc_side=2):
+        # load configuration file
+        with open('compass.conf', mode='r') as f:
+            cnf = pickle.load(f)
+        self.MPU_Centre = cnf[0][0]
+        self.MPU_TR = cnf[1]
+
+        # setup compasses
+
+        # MPU9250
+        self.imu = imu
+
+        # LSM303
+        self.hml = LSM303.TiltCompCompass(hmc_side)
+        self.hml.setDeclination(0)
+        self.hml.setContinuousMode()
+
+        self.gyrobias = (-1.394046, 1.743511, 0.4735878)
+
+        # setup fusions
+        self.fuse = Fusion()
+        #self.fuse.magbias=(43.6694, -1.2140, 32.3375) #based on benchtest
+
+        self.fuseh = Fusion()#TODO: temp for comparison
+#        self.fuseh.magbias=(-19.397,-71.753,33.872)
+        self.fuseh.magbias=(-4.8839,30.7156,5.1349) #TODO introduce into calibration
+
+        self.update()
+        self.hrp = [self.fuse.heading, self.fuse.roll, self.fuse.pitch]
+
+    def poll(self, dummy):
+        self.update()
+        if self.hrp[0] != self.fuse.heading:
+            self.hrp = [self.fuse.heading, self.fuse.roll, self.fuse.pitch]
+            return 1
+        return None
+
+    def update(self):
+        accel = self.imu.accel.xyz
+        gyroraw = self.imu.gyro.xyz
+
+        gyro = [gyroraw[0] - self.gyrobias[0], gyroraw[1] - self.gyrobias[1], gyroraw[2] - self.gyrobias[2]]
+
+        self.mag = self.imu.mag.xyz        # TODO: global for temp calibration
+        self.magh = self.hml.getAxes()     # TODO: temp for comparison
+
+        self.fuse.update(accel, gyro, self.adjust_mag(self.mag, self.MPU_Centre, self.MPU_TR))
+        self.fuseh.update(accel, gyro, self.magh) # TODO: temp for comparison
+
+    def getmag(self):
+        return self.imu.mag.xyz
+
+    @staticmethod
+    def adjust_mag(mag, centre, TR):
+        mx_raw = mag[0] - centre[0]
+        my_raw = mag[1] - centre[1]
+        mz_raw = mag[2] - centre[2]
+
+        mx = mx_raw * TR[0][0] + my_raw * TR[0][1] + mz_raw * TR[0][2]
+        my = mx_raw * TR[1][0] + my_raw * TR[1][1] + mz_raw * TR[1][2]
+        mz = mx_raw * TR[2][0] + my_raw * TR[2][1] + mz_raw * TR[2][2]
+        return(mx,my,mz)
+
+    def Calibrate(self):
+        print("Calibrating. Press switch when done.")
+        sw = pyb.Switch()
+        self.fuse.calibrate(self.getmag, sw, lambda: pyb.delay(100))
+        print(self.fuse.magbias)
+
+    def gyrocal(self):
+        xa=0
+        ya=0
+        za=0
+        for x in range(0,100):
+            xyz=self.imu.gyro.xyz
+            xa+=xyz[0]
+            ya+=xyz[1]
+            za+=xyz[2]
+            pyb.delay(1000)
+        print(xa/100,ya/100,za/100)
+
+    def view(self):
+        while True:
+            self.update()
+            print("{0}    {1}".format(self.fuse.heading,self.fuseh.heading))
 
     @property
     def heading(self):
