@@ -16,7 +16,7 @@ class Seatalk:
         # flags
         # self.speedthroughwater_changed = False
         # self.averagespeedthroughwater_changed = False
-        # self.trip_changed = False
+        self.trip_changed = False
         # self.totaltrip_changed = False
         self.status = Status.Empty
 
@@ -52,13 +52,13 @@ class Seatalk:
                 self.status = Status.Command
 
             # if on command status check for length
-            elif self.status == Status.Command and self.paritycheck(parity) == False:
+            elif self.status == Status.Command and self.paritycheck(parity) is False:
                 self.data.append(newdata)
                 self.length = (newdata & 0x0F) + 1
                 self.status = Status.Length
 
             # if on length status collect data to match length
-            elif self.status == Status.Length and self.paritycheck(parity) == False:
+            elif self.status == Status.Length and self.paritycheck(parity) is False:
                 self.data.append(newdata)
                 self.length -= 1
                 # if length is achieved mark as complete
@@ -86,7 +86,7 @@ class Seatalk:
             return False
 
 # Decode sections
-
+# TODO: deos int.from_bytes work?
 #  20  01  XX  XX  Speed through water: XXXX/10 Knots
 #                  Corresponding NMEA sentence: VHW
     def Speed_through_water_20(self, data):
@@ -144,6 +144,11 @@ class Seatalk:
             return VHW(self.speedthroughwater).msg
         return ERR('ST 26 incorrect length: {}'.format(len(data))).msg
 
+    def update(self,output_buffer):
+        output_buffer.write(self.output)
+        self.output = []
+        if self.trip_changed:
+            output_buffer.logupdate(self.trip)
 
 class Status:
     Empty = 0
@@ -156,12 +161,13 @@ def seatalkthread(out_buff):
     stream = pyb.UART(1, 4800, bits=9)
     yield 0.5
     st = Seatalk(stream)
-    wf = Poller(st.Poll,(4,), 5)
+    wf = Poller(st.Poll, (4,), 5)
     while True:
         reason = (yield wf())
         if reason[1]:
-            out_buff.write(st.output)
-            st.output = []
+            st.update(st.output)
+            #out_buff.write(st.output)
+            #st.output = []
         if reason[2]:
             out_buff.write(ERR('ST DATA TIMEOUT').msg)
 

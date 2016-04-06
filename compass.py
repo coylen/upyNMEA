@@ -185,10 +185,10 @@ class TCCompass:
             pyb.delay(1000)
         print(xa/100,ya/100,za/100)
 
-    def view(self):
-        while True:
-            self.update()
-            print("{0}    {1}".format(self.fuse.heading,self.fuseh.heading))
+    # def view(self):
+    #     while True:
+    #         self.update()
+    #         print("{0}    {1}".format(self.fuse.heading, self.fuseh.heading))
 
     @property
     def heading(self):
@@ -204,7 +204,7 @@ class TCCompass:
 
     @property
     def output(self):
-        outstring = (CMP("{},{},{},{}".format(self.mag,self.hrp[0],self.magh,self.fuseh.heading)).msg,
+        outstring = (CMP("{},{},{},{}".format(self.mag, self.hrp[0], self.magh, self.fuseh.heading)).msg,
                      HDG(self.hrp[0]).msg)
         return outstring
 

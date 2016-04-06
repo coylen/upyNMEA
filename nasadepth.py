@@ -47,13 +47,13 @@
 # // Digit number   : 12.3
 
 from nasa import NASA
-from nmeagenerator import DPT
+from nmeagenerator import DPT, ERR
 
 
 class NASADepth(NASA):
 
-    def __init__(self, i2c, pin, pin_value):
-        super().__init__(i2c, pin, pin_value)
+    def __init__(self, i2c_object=None, side_str=None, pin=None, pin_value=None):
+        super().__init__(i2c_object, side_str, pin, pin_value)
         self.packet_size = 11
 
     COMMAND = bytes(b'\xCE\x80\xE0\xF8\x70')
@@ -124,5 +124,7 @@ class NASADepth(NASA):
                 depth = max(digit1, 0)*100 + digit2*10 + digit3
 
             if depth > 0:
-                self.output += DPT(depth, 0)
-                return depth
+                self.output.append(DPT(depth, 0).msg)
+            else:
+                self.output.append(ERR('NASA DEPTH INVALID').msg)
+

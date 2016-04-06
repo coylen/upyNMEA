@@ -1,5 +1,5 @@
 from nasa import NASA
-from nmeagenerator import VWR
+from nmeagenerator import VWR, ERR
 
 
 class NASAWind(NASA):
@@ -57,18 +57,24 @@ class NASAWind(NASA):
         if self.data[:5] == self.COMMAND:
             self.data = self.data[5:]  # strip this preamble before further processing
 
-            directiondata = self.mask(self.data, self.DIRECTION_MASK)
-            directiondata_int = int.from_bytes(directiondata, byteorder='big')
-            # get direction of or standard single digit display for position of bit and corresponding position
-            if self.bitCount(directiondata_int) == 1:
-                direction = self.DIRECTION[self.lowestSet(directiondata_int)]
-                if direction >= 180:
-                    wind_angle = abs(direction - 360)
-                    left_right = 'L'
-                elif direction >= 0:
-                    wind_angle = direction
-                    left_right = 'R'
+            try:
+                directiondata = self.mask(self.data, self.DIRECTION_MASK)
+                #TODO: int.from_bytes not in micropython use validbitandposition instead?
+                directiondata_int = int.from_bytes(directiondata, byteorder='big')
+                # get direction of or standard single digit display for position of bit and corresponding position
+                if self.bitCount(directiondata_int) == 1:
+                    direction = self.DIRECTION[self.lowestSet(directiondata_int)]
+                    if direction >= 180:
+                        wind_angle = abs(direction - 360)
+                        left_right = 'L'
+                    elif direction >= 0:
+                        wind_angle = direction
+                        left_right = 'R'
+            except:
+                self.output.append(ERR('NASA WIND DIRECTION ERROR').msg)
 
+            digit1 = -1
+            digit2 = -1
             digit1 = self.digitdecode(self.data, self.DIGIT1_MASK, self.DIGIT1)
             digit2 = self.digitdecode(self.data, self.DIGIT2_MASK, self.DIGIT2)
 
@@ -77,4 +83,9 @@ class NASAWind(NASA):
             else:
                 windspeed = max(digit1, 0)*10 + digit2
 
-        self.output += VWR(wind_angle, left_right, windspeed)
+            if windspeed >= 0:
+                self.output.append(VWR(wind_angle, left_right, windspeed).msg)
+            else:
+                self.output.append(ERR('NASA WIND SPEED ERROR').msg)
+
+        #TODO: error check on output
