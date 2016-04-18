@@ -1,7 +1,6 @@
 # provides the control of the I2C selector control and provides data for the decoding functions
 # NRC
 
-from usched import Sched, Timeout, wait
 from nasadepth import NASADepth
 from nasawind import NASAWind
 import pyb

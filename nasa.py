@@ -1,10 +1,11 @@
 import pyb
-
+from nmeagenerator import ERR
 
 # template class for NASA Instruments
 class NASAException(OSError):
     # Exception for NASA devices
     pass
+
 
 class NASA:
 
@@ -20,10 +21,8 @@ class NASA:
             side = 2
 
         if i2c_object is None:
-#            print('init')
             self.I2C = pyb.I2C(side, pyb.I2C.SLAVE, addr=0x3e)
         else:
-#            print('obj')
             self.I2C = i2c_object
 
         self.pin = pin
@@ -33,7 +32,11 @@ class NASA:
         self.output = []
 
     def update(self, output_buffer):
-        self.receive()
+        try:
+            self.receive()
+        except NASAException:
+            self.output.append(ERR(self._I2Cerror).msg)
+            self.I2C.init(pyb.I2C.SLAVE, addr=0x3e) #TODO hack?
         self.decode()
         self.send(output_buffer)
 
@@ -62,22 +65,23 @@ class NASA:
 
             return masked_data
 
-    @staticmethod
-    def lowestSet(int_type):
-        low = int_type & -int_type
-        lowbit = -1
-        while low:
-            low >>= 1
-            lowbit += 1
-        return lowbit
-
-    @staticmethod
-    def bitCount(int_type):
-        count = 0
-        while int_type:
-            int_type &= int_type - 1
-            count += 1
-        return count
+    # redundant just check before delete
+    # @staticmethod
+    # def lowestSet(int_type):
+    #     low = int_type & -int_type
+    #     lowbit = -1
+    #     while low:
+    #         low >>= 1
+    #         lowbit += 1
+    #     return lowbit
+    #
+    # @staticmethod
+    # def bitCount(int_type):
+    #     count = 0
+    #     while int_type:
+    #         int_type &= int_type - 1
+    #         count += 1
+    #     return count
 
     @staticmethod
     def digitdecode(data, digitmask, digitcontrol):
@@ -107,14 +111,3 @@ class NASA:
         if count != 1:
             raise ValueError()
         return position
-
-def log_generator():
-    history = []
-    loghistory = {'date':1459851540, 'distance':159}
-    for x in range(0,50):
-        history.append(loghistory)
-    return {'total':99999, 'daily': 299, 'date':1459851540, 'alive':1459851540, 'trip':500, 'history':history}
-
-
-log=log_generator()
-print(log)

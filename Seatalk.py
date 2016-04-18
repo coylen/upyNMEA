@@ -2,6 +2,7 @@ import pyb
 from usched import Sched, Poller, wait,Roundrobin
 from nmeagenerator import VHW, VLW, ERR
 
+
 class Seatalk:
     def __init__(self, stream):
         # values
@@ -33,11 +34,11 @@ class Seatalk:
     def Poll(self, dummy):
         if self.stream.any():
             uart_data = self.stream.read(2)
-            if self.Process(uart_data):
+            if self.process(uart_data):
                 return 1
         return None
 
-    def Process(self, data):
+    def process(self, data):
         # loop while data available
         x = 0
         while len(data) > x+1:
@@ -71,7 +72,7 @@ class Seatalk:
                 try:
                     out = self.Decode[self.command](self.data)
                 except:
-                    out = ERR("SEATALK SENTENCE NOT RECOGNISED").msg
+                    out = ERR("{:2x} SEATALK SENTENCE NOT RECOGNISED".format(self.command)).msg
                 finally:
                     self.output.append(out)
                     self.status = Status.Empty
@@ -149,6 +150,7 @@ class Seatalk:
         self.output = []
         if self.trip_changed:
             output_buffer.logupdate(self.trip)
+
 
 class Status:
     Empty = 0

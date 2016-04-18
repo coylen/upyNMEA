@@ -4,36 +4,38 @@ from nmeagenerator import VWR, ERR
 
 class NASAWind(NASA):
 
+    _I2Cerror = "I2C failure when communicating with NASA WIND INSTRUMENT"
+
     def __init__(self, i2c_object=None, side_str=None, pin=None, pin_value=None):
         super().__init__(i2c_object, side_str, pin, pin_value)
         self.packet_size = 17
 
     COMMAND = bytes(b'\xC8\x80\xE0\xF8\x70')
-    DECPOINT_MASK = bytes(b'\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00')
-    DIGIT1_MASK = bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x70')
-    DIGIT2_MASK = bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x07\x00\x00')
+    DECPOINT_MASK = bytes(b'\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00')
+    DIGIT1_MASK = bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x70\x00')
+    DIGIT2_MASK = bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x07\x00\x00\x00')
 
-    DIGIT1 = [bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x30'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0D\x00\x00\x60'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x40'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x50'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0B\x00\x00\x50'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0B\x00\x00\x70'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x70'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x50')]
+    DIGIT1 = [bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x30\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0D\x00\x00\x60\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x40\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x06\x00\x00\x50\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0B\x00\x00\x50\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0B\x00\x00\x70\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x70\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x0F\x00\x00\x50\x00')]
 
-    DIGIT2 = [bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x03\x00\x00'),
-              bytes(b'\x00\x00\x00\x60\x00\x00\x00\x00\x00\x00\x00'),
-              bytes(b'\x00\x00\x00\xD0\x00\x00\x00\x00\x06\x00\x00'),
-              bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x04\x00\x00'),
-              bytes(b'\x00\x00\x00\x60\x00\x00\x00\x00\x05\x00\x00'),
-              bytes(b'\x00\x00\x00\xB0\x00\x00\x00\x00\x05\x00\x00'),
-              bytes(b'\x00\x00\x00\xB0\x00\x00\x00\x00\x07\x00\x00'),
-              bytes(b'\x00\x00\x00\x70\x00\x00\x00\x00\x00\x00\x00'),
-              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00'),
-              bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x05\x00\x00')]
+    DIGIT2 = [bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x03\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x60\x00\x00\x00\x00\x00\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\xD0\x00\x00\x00\x00\x06\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x04\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x60\x00\x00\x00\x00\x05\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\xB0\x00\x00\x00\x00\x05\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\xB0\x00\x00\x00\x00\x07\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x70\x00\x00\x00\x00\x00\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00'),
+              bytes(b'\x00\x00\x00\xF0\x00\x00\x00\x00\x05\x00\x00\x00')]
 
     DIRECTION_MASK = bytes(b'\x0F\xFF\x0F\x0F\xFF\xF0\x00\xF0\xF0\xFF\x0F\xFF')
     DIRECTION = {0: 246, 1: 258, 2: 252, 3: 264, 4: 240, 5: 228, 6: 234, 7: 222,
@@ -59,17 +61,13 @@ class NASAWind(NASA):
 
             try:
                 directiondata = self.mask(self.data, self.DIRECTION_MASK)
-                #TODO: int.from_bytes not in micropython use validbitandposition instead?
-                directiondata_int = int.from_bytes(directiondata, byteorder='big')
-                # get direction of or standard single digit display for position of bit and corresponding position
-                if self.bitCount(directiondata_int) == 1:
-                    direction = self.DIRECTION[self.lowestSet(directiondata_int)]
-                    if direction >= 180:
-                        wind_angle = abs(direction - 360)
-                        left_right = 'L'
-                    elif direction >= 0:
-                        wind_angle = direction
-                        left_right = 'R'
+                direction = self.DIRECTION[self.validbitandposition(directiondata)]
+                if direction >= 180:
+                    wind_angle = abs(direction - 360)
+                    left_right = 'L'
+                elif direction >= 0:
+                    wind_angle = direction
+                    left_right = 'R'
             except:
                 self.output.append(ERR('NASA WIND DIRECTION ERROR').msg)
 
@@ -87,5 +85,3 @@ class NASAWind(NASA):
                 self.output.append(VWR(wind_angle, left_right, windspeed).msg)
             else:
                 self.output.append(ERR('NASA WIND SPEED ERROR').msg)
-
-        #TODO: error check on output

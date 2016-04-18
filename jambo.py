@@ -7,6 +7,7 @@ import compass # tiltcompensated compass
 from nasacontrol import NASADepthThread, NASAWindThread
 from Seatalk import seatalkthread
 from barometer import barometerthread
+
 import pyb
 import time
 
@@ -17,17 +18,16 @@ def run():
     # generate objects
     OB = output_buffer()
     compassthread = compass.cthread(OB)
-    mpu_i2c = compass.i2c_object
+#    mpu_i2c = compass.i2c_object
     pyb.delay(100)
-    othread = outputthread(OB, test=True)
+    othread = outputthread(OB)#, test=True)
     objSched=Sched()
     objSched.add_thread(seatalkthread(OB))
-#    objSched.add_thread(compassthread)
-#    objSched.add_thread(NASAWindThread(OB))
-#    objSched.add_thread(NASADepthThread(OB))
-    mpu_i2c = compass.i2c_object
+    objSched.add_thread(compassthread)
+    objSched.add_thread(NASAWindThread(OB))
+    objSched.add_thread(NASADepthThread(OB))
     pyb.delay(100)
-#    objSched.add_thread(barometerthread(i2c_object=mpu_i2c))
+    objSched.add_thread(barometerthread(OB))#i2c_object=mpu_i2c))
     objSched.add_thread(othread)
     objSched.run()
 
@@ -38,7 +38,7 @@ def outputthread(outbuf, test = False):
         outputserial=pyb.UART(6, 115200)
 
     while True:
-        yield 1
+        yield 0.1 #TODO reset
         outbuf.print(outputserial)
 #        outbuf.clear()
         # if test:
@@ -87,26 +87,26 @@ class output_buffer:
 
     def load(self):
         #TODO: recover data from backup registers
+        pass
 
-
-        currentdaydata = time.time()
-        currentdaytuple = time.localtime(currentdaydata)
-        # adjust currentdaytuple to make to midnight on day of interest
-        date = time.mktime(currentdaytuple)
-
-        dt = self.log['date']
-        dist = self.log['daily'] + self.log['alive']
-        if date == dt:
-            self.log['daily'] = dist
-            self.log['alive'] = 0
-
-        # if new day adjust all records and create history
-        elif date > dt:
-            hist = {'date':dt, 'distance':dist}
-            self.log['history'].insert(0,hist)
-            self.log['history'] = self.log['history'][:-1]
-            self.log['total'] = self.log['total'] + dist
-        # if date current create new alive
+        # currentdaydata = time.time()
+        # currentdaytuple = time.localtime(currentdaydata)
+        # # adjust currentdaytuple to make to midnight on day of interest
+        # date = time.mktime(currentdaytuple)
+        #
+        # dt = self.log['date']
+        # dist = self.log['daily'] + self.log['alive']
+        # if date == dt:
+        #     self.log['daily'] = dist
+        #     self.log['alive'] = 0
+        #
+        # # if new day adjust all records and create history
+        # elif date > dt:
+        #     hist = {'date':dt, 'distance':dist}
+        #     self.log['history'].insert(0,hist)
+        #     self.log['history'] = self.log['history'][:-1]
+        #     self.log['total'] = self.log['total'] + dist
+        # # if date current create new alive
 
 
 def log_generator():

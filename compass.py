@@ -12,11 +12,6 @@ import LSM303
 import pickle
 i2c_object = None
 
-def stop(fTim, objSch):                                     # Stop the scheduler after fTim seconds
-    yield from wait(fTim)
-    objSch.stop()
-
-
 class TiltCompensatedCompass:
 
     def __init__(self, imu, hmc_side=2):
@@ -102,12 +97,17 @@ class TiltCompensatedCompass:
 
 class TCCompass:
 
-    def __init__(self, imu, hmc_side=2):
+    def __init__(self, imu, hmc_side=1):
         # load configuration file
         with open('calibration.conf', mode='r') as f:
-            cnf = pickle.load(f)
-        self.MPU_Centre = cnf[0][0]
-        self.MPU_TR = cnf[1]
+            mpu_conf = f.readline()
+            lsm_conf = f.readline()
+            mcnf = pickle.loads(mpu_conf)
+            lcnf = pickle.loads(lsm_conf)
+        self.MPU_Centre = mcnf[0][0]
+        self.MPU_TR = mcnf[1]
+        self.LSM_Centre = mcnf[0][0]
+        self.LSM_TR = mcnf[1]
         self.counter = pyb.millis()
 
         # setup compasses
@@ -116,20 +116,15 @@ class TCCompass:
         self.imu = imu
 
         # LSM303
-        self.hml = LSM303.TiltCompCompass(hmc_side)
-        self.hml.setDeclination(0)
-        self.hml.setContinuousMode()
+        self.lsm = LSM303.TiltCompCompass(hmc_side)
+        self.lsm.setDeclination(0)
+        self.lsm.setContinuousMode()
 
         self.gyrobias = (-1.394046, 1.743511, 0.4735878)
 
         # setup fusions
         self.fuse = Fusion()
-        #self.fuse.magbias=(43.6694, -1.2140, 32.3375) #based on benchtest
-
         self.fuseh = Fusion()#TODO: temp for comparison
-#        self.fuseh.magbias=(-19.397,-71.753,33.872)
-        self.fuseh.magbias=(-4.8839, 30.7156, 5.1349) #TODO introduce into calibration
-
         self.update()
         self.hrp = [self.fuse.heading, self.fuse.roll, self.fuse.pitch]
 
@@ -147,11 +142,12 @@ class TCCompass:
 
         gyro = [gyroraw[0] - self.gyrobias[0], gyroraw[1] - self.gyrobias[1], gyroraw[2] - self.gyrobias[2]]
 
-        self.mag = self.imu.mag.xyz        # TODO: global for temp calibration
-        self.magh = self.hml.getAxes()     # TODO: temp for comparison
+        self.mag = self.imu.mag.xyz
+        self.magh = self.lsm.getAxes()
+
 
         self.fuse.update(accel, gyro, self.adjust_mag(self.mag, self.MPU_Centre, self.MPU_TR))
-        self.fuseh.update(accel, gyro, self.magh) # TODO: temp for comparison
+        self.fuseh.update(accel, gyro, self.adjust_mag(self.magh, self.LSM_Centre, self.LSM_TR))
 
     def getmag(self):
         return self.imu.mag.xyz
@@ -204,8 +200,8 @@ class TCCompass:
 
     @property
     def output(self):
-        outstring = (CMP("{},{},{},{}".format(self.mag, self.hrp[0], self.magh, self.fuseh.heading)).msg,
-                     HDG(self.hrp[0]).msg)
+        outstring = [CMP("{},{},{},{}".format(self.mag, self.hrp[0], self.magh, self.fuseh.heading)).msg,
+                     HDG(self.hrp[0]).msg]
         return outstring
 
 
@@ -215,12 +211,14 @@ def cthread(out_buf):
     i2c_object = imu._mpu_i2c
     yield 0.03                                  # Allow accelerometer to settle
     compass = TCCompass(imu)
-#    wf = Poller(compass.poll, (4,), 1)                        # Instantiate a Poller with 1 second timeout.
+
     while True:
         yield
-        if compass.process():
-            out_buf.write(compass.output)
-
+        try:
+            if compass.process():
+                out_buf.write(compass.output)
+        except:
+            out_buf.write('compass error')
 
 # def usertest():
 #     imu=MPU9250('X')

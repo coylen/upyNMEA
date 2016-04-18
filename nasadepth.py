@@ -52,6 +52,8 @@ from nmeagenerator import DPT, ERR
 
 class NASADepth(NASA):
 
+    _I2Cerror = "I2C failure when communicating with NASA DEPTH INSTRUMENT"
+
     def __init__(self, i2c_object=None, side_str=None, pin=None, pin_value=None):
         super().__init__(i2c_object, side_str, pin, pin_value)
         self.packet_size = 11
@@ -127,4 +129,3 @@ class NASADepth(NASA):
                 self.output.append(DPT(depth, 0).msg)
             else:
                 self.output.append(ERR('NASA DEPTH INVALID').msg)
-
