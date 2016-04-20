@@ -4,7 +4,7 @@ from nmeagenerator import VHW, VLW, ERR
 
 
 class Seatalk:
-    def __init__(self, stream):
+    def __init__(self, stream, offset):
         # values
         self.speedthroughwater = 0
         self.averagespeedthroughwater = 0
@@ -14,6 +14,7 @@ class Seatalk:
         # self.buff=[]
         self.command = 0
         self.length = 0
+        self.offset = offset
         # flags
         # self.speedthroughwater_changed = False
         # self.averagespeedthroughwater_changed = False
@@ -104,16 +105,16 @@ class Seatalk:
     def Trip_milage_21(self, data):
         if len(data) == 4:
             self.trip = (int.from_bytes(data[-3:], byteorder='little')) / 100.0
-            # self.trip_changed = True
-            return VLW(self.trip).msg
+            self.trip_changed = True
+            return VLW(self.trip+self.offset).msg
         return ERR('ST 21 incorrect length: {}'.format(len(data))).msg
 
 #  22  02  XX  XX  00  Total Mileage: XXXX/10 nautical miles
     def Total_milage_22(self, data):
         if len(data) == 4:
             self.totaltrip = (int.from_bytes(data[-3:], byteorder='little')) / 10.0
-            # self.totaltrip_changed = True
-            return "TOTAL TRIP {0}".format(self.totaltrip)# TODO: Create NMEA for this of remove
+            #  self.totaltrip_changed = True
+            return "TOTAL TRIP {0}".format(self.totaltrip)  # TODO: Create NMEA for this of remove
         return ERR('ST 22 incorrect length: {}'.format(len(data))).msg
 
 #  25  Z4  XX  YY  UU  VV AW  Total & Trip Log
@@ -123,9 +124,9 @@ class Seatalk:
         if len(data) == 6:
             self.totaltrip = (data[1] + data[2]*256 + (data[0] >> 4)*4096) / 10
             self.trip = (data[3] + data[4]*256 + (data[5] & 0x0F)*4096) / 100
-            # self.trip_changed = True
+            self.trip_changed = True
             # self.totaltrip_changed = True
-            return VLW(self.trip).msg
+            return VLW(self.trip + self.offset).msg
 # TODO:            self.output += "TOTAL TRIP {0}".format(self.totaltrip) # TODO: Create NMEA for this of remove
         return ERR('ST 25 incorrect length: {}'.format(len(data))).msg
 
@@ -150,6 +151,7 @@ class Seatalk:
         self.output = []
         if self.trip_changed:
             output_buffer.logupdate(self.trip)
+            self.trip_changed = False
 
 
 class Status:
@@ -160,14 +162,14 @@ class Status:
 
 
 def seatalkthread(out_buff):
-    stream = pyb.UART(1, 4800, bits=9)
+    stream = pyb.UART(4, 4800, bits=9)
     yield 0.5
-    st = Seatalk(stream)
+    st = Seatalk(stream, out_buff.log['daily'])
     wf = Poller(st.Poll, (4,), 5)
     while True:
         reason = (yield wf())
         if reason[1]:
-            st.update(st.output)
+            st.update(out_buff)
             #out_buff.write(st.output)
             #st.output = []
         if reason[2]:

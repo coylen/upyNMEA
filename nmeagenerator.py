@@ -74,7 +74,8 @@ class VLW(NMEASentence):
 
 class HDG(NMEASentence):
     def __init__(self,degree_magnetic):
-        self.msg = "$UPHDG,{0},1.25,W,,".format(degree_magnetic)
+        #TODO: include deviation?
+        self.msg = "$UPHDG,{0},,,1.03,W".format(degree_magnetic)
         super(HDG,self).__init__()
 
 
