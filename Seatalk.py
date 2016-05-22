@@ -1,5 +1,5 @@
-import pyb
-from usched import Sched, Poller, wait,Roundrobin
+#import pyb
+#from usched import Sched, Poller, wait,Roundrobin
 from nmeagenerator import VHW, VLW, ERR
 
 
@@ -93,7 +93,7 @@ class Seatalk:
 #                  Corresponding NMEA sentence: VHW
     def Speed_through_water_20(self, data):
         if len(data) == 3:
-            self.speedthroughwater = (int.from_bytes(data[-2:], byteorder='little')) / 10.0
+            self.speedthroughwater = (data[1]+data[2]*256) / 10.0
             # self.speedthroughwater_changed = True
             return VHW(self.speedthroughwater).msg
         return ERR('ST 20 incorrect length: {}'.format(len(data))).msg
@@ -104,7 +104,7 @@ class Seatalk:
 #                  Corresponding NMEA sentence: MTW
     def Trip_milage_21(self, data):
         if len(data) == 4:
-            self.trip = (int.from_bytes(data[-3:], byteorder='little')) / 100.0
+            self.trip = (data[0]+data[1]*256+(data[2]&0x0F)*4096) / 100.0
             self.trip_changed = True
             return VLW(self.trip+self.offset).msg
         return ERR('ST 21 incorrect length: {}'.format(len(data))).msg
@@ -112,7 +112,7 @@ class Seatalk:
 #  22  02  XX  XX  00  Total Mileage: XXXX/10 nautical miles
     def Total_milage_22(self, data):
         if len(data) == 4:
-            self.totaltrip = (int.from_bytes(data[-3:], byteorder='little')) / 10.0
+            self.totaltrip = (data[1]+data[2]*256) / 10.0
             #  self.totaltrip_changed = True
             return "TOTAL TRIP {0}".format(self.totaltrip)  # TODO: Create NMEA for this of remove
         return ERR('ST 22 incorrect length: {}'.format(len(data))).msg
@@ -139,8 +139,8 @@ class Seatalk:
 #                      Corresponding NMEA sentence: VHW
     def Speed_through_water_26(self, data):
         if len(data) == 6:
-            self.speedthroughwater = (int.from_bytes(data[1:3], byteorder='little')) / 100
-            self.averagespeedthroughwater = (int.from_bytes(data[3:5], byteorder='little')) / 100
+            self.speedthroughwater = (data[0]+data[1]*256) / 100
+            self.averagespeedthroughwater = (data[2]+data[3]*256) / 100
             # self.speedthroughwater_changed = True
             # self.averagespeedthroughwater_changed = True
             return VHW(self.speedthroughwater).msg
@@ -228,3 +228,7 @@ def seatalkthread(out_buff):
 #         pass
 #
 
+a=Seatalk(0,0)
+a.command= 32
+a.data=[33,0,255]
+a.Decode[a.command](a.data)

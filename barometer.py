@@ -4,7 +4,7 @@
 
 import pyb
 from bmp180 import BMP180
-from usched import Sched, Timeout, wait
+#from usched import Sched, Timeout, wait
 from nmeagenerator import MDA
 from struct import unpack as unp
 
