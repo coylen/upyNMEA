@@ -1,10 +1,10 @@
-#import pyb
-#from usched import Sched, Poller, wait,Roundrobin
+import pyb
+from usched import Sched, Poller, wait,Roundrobin
 from nmeagenerator import VHW, VLW, ERR
 
 
 class Seatalk:
-    def __init__(self, stream, offset):
+    def __init__(self, stream):#, offset):
         # values
         self.speedthroughwater = 0
         self.averagespeedthroughwater = 0
@@ -14,7 +14,7 @@ class Seatalk:
         # self.buff=[]
         self.command = 0
         self.length = 0
-        self.offset = offset
+        self.offset = 0#offset
         # flags
         # self.speedthroughwater_changed = False
         # self.averagespeedthroughwater_changed = False
@@ -104,7 +104,7 @@ class Seatalk:
 #                  Corresponding NMEA sentence: MTW
     def Trip_milage_21(self, data):
         if len(data) == 4:
-            self.trip = (data[0]+data[1]*256+(data[2]&0x0F)*4096) / 100.0
+            self.trip = (data[1]+data[2]*256+(data[3]&0x0F)*4096) / 100.0
             self.trip_changed = True
             return VLW(self.trip+self.offset).msg
         return ERR('ST 21 incorrect length: {}'.format(len(data))).msg
@@ -139,8 +139,8 @@ class Seatalk:
 #                      Corresponding NMEA sentence: VHW
     def Speed_through_water_26(self, data):
         if len(data) == 6:
-            self.speedthroughwater = (data[0]+data[1]*256) / 100
-            self.averagespeedthroughwater = (data[2]+data[3]*256) / 100
+            self.speedthroughwater = (data[1]+data[2]*256) / 100
+            self.averagespeedthroughwater = (data[3]+data[4]*256) / 100
             # self.speedthroughwater_changed = True
             # self.averagespeedthroughwater_changed = True
             return VHW(self.speedthroughwater).msg
@@ -164,7 +164,7 @@ class Status:
 def seatalkthread(out_buff):
     stream = pyb.UART(4, 4800, bits=9)
     yield 0.5
-    st = Seatalk(stream, out_buff.log['daily'])
+    st = Seatalk(stream)#, out_buff.log['daily'])
     wf = Poller(st.Poll, (4,), 5)
     while True:
         reason = (yield wf())
@@ -228,7 +228,7 @@ def seatalkthread(out_buff):
 #         pass
 #
 
-a=Seatalk(0,0)
-a.command= 32
-a.data=[33,0,255]
-a.Decode[a.command](a.data)
+#a=Seatalk(0,0)
+#a.command= 32
+#a.data=[33,0,255]
+#a.Decode[a.command](a.data)

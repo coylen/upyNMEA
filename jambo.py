@@ -7,7 +7,7 @@ import compass # tiltcompensated compass
 from nasacontrol import NASADepthThread, NASAWindThread
 from Seatalk import seatalkthread
 from barometer import barometerthread
-import pickle
+#import pickle
 import upower
 import pyb
 import time
@@ -26,8 +26,8 @@ def run():
     objSched=Sched()
     objSched.add_thread(seatalkthread(OB))
     objSched.add_thread(compassthread)
-    objSched.add_thread(NASAWindThread(OB))
-    objSched.add_thread(NASADepthThread(OB))
+#    objSched.add_thread(NASAWindThread(OB))
+#    objSched.add_thread(NASADepthThread(OB))
     pyb.delay(100)
     objSched.add_thread(barometerthread(OB))#i2c_object=mpu_i2c))
     objSched.add_thread(othread)
@@ -102,16 +102,19 @@ class output_buffer:
                 # date - log date
                 # distance - log distance for day
     def logupdate(self, log):
-        self.log['alive'] = log
+        return
+	    self.log['alive'] = log
         self.save()
 
     def save(self):
+	    return
         bkpram = upower.BkpRAM()
         z = pickle.dumps(self.log).encode('utf8')
         bkpram[0] = len(z)
         bkpram.ba[4: 4+len(z)] = z # Copy into backup RAM
 
     def load(self):
+	    return
         reason = upower.why()                           # Why have we woken?
         if reason == 'BOOT':                            # first boot
             self.log = log_generator()

@@ -70,15 +70,18 @@ def run():
             disabled = False
 
 ##seperate paste
+from machine import Pin
+from slave import I2C_SLAVE
+i2c=I2C_SLAVE(Pin(5),Pin(4))
+i2c.read(5)
+
+#old
 from machine import Pin, I2C
-
-def custom():
-    i2c=I2C(scl=Pin(5),sda=Pin(4), freq=125000)
-    data=i2c.readfrom(0x3e, 1)
-    print(data)
+i2c=I2C(scl=Pin(5),sda=Pin(4), freq=125000)
+i2c.readfrom(0x3e, 1)
 
 
+#pyboard
 import pyb
-a=pyb.I2C(1,pyb.I2C.MASTER)
-, baudrate=1000)
+a=pyb.I2C(3,pyb.I2C.MASTER, baudrate=100000)
 a.scan()

@@ -21,8 +21,8 @@ class TCCompass:
             lcnf = pickle.loads(lsm_conf)
         self.MPU_Centre = mcnf[0][0]
         self.MPU_TR = mcnf[1]
-        self.LSM_Centre = mcnf[0][0]
-        self.LSM_TR = mcnf[1]
+        self.LSM_Centre = lcnf[0][0]
+        self.LSM_TR = lcnf[1]
         self.counter = pyb.millis()
         self.timeout = timeout
 
@@ -127,9 +127,9 @@ class TCCompass:
     @property
     def output(self):
 
-        outstring = [CMP("1,{},{}".format(self.mag, self.heading)).msg,
-                     CMP("2,{},{}".format(self.magh, self.headingh)).msg,
-                     HDG(self.heading).msg]
+        outstring = [CMP("1,{},{}".format(self.mag, self.hrp[0])).msg,
+                     CMP("2,{},{}".format(self.magh, self.fuseh.heading)).msg,
+                     HDG(self.hrp[0]).msg]
         for x in range(0,2):
             outstring[x] = outstring[x].replace('(','')
             outstring[x] = outstring[x].replace(')','')
