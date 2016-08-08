@@ -312,8 +312,9 @@ class TCCompass_LSMADJUST:
 
         self.mag = self.imu.mag.xyz
         self.magh = self.lsm.getAxes()
-        self.check_lsm()
-
+        valid_lsm = False
+        while not valid_lsm:
+            valid_lsm = self.check_lsm()
 
         self.fuse.update(accel, gyro, self.adjust_mag(self.mag, self.MPU_Centre, self.MPU_TR))
         self.fuseh.update(accel, gyro, self.adjust_mag(self.magh, self.LSM_Centre, self.LSM_TR))
@@ -325,7 +326,8 @@ class TCCompass_LSMADJUST:
         for a in self.magh:
             if a is None:
                 self.adjust_lsm()
-                self.check_lsm()
+                return False
+        return True
 
     def adjust_lsm(self):
         g=[0.88, 1.3, 1.9, 2.5, 4.0, 4.7, 5.6, 8.1]
@@ -404,11 +406,11 @@ class TCCompass_LSMADJUST:
 
 
 def cthread(out_buf):
-    imu = MPU9250('X')
+    imu = MPU9250('X', transposition=(1,0,2), scaling=(1,-1,1))
     global i2c_object
     i2c_object = imu._mpu_i2c
     yield 0.03                                  # Allow accelerometer to settle
-    compass = TCCompass(imu, timeout=1000)
+    compass = TCCompass_LSMADJUST(imu, timeout=1000)
 
     while True:
         yield
