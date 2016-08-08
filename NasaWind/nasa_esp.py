@@ -20,13 +20,14 @@ class NASA:
         self.data = []
         self.output = []
 
-    def update(self, output_buffer):
+    def update(self):
         try:
             self.receive()
+            self.decode()
         except NASAException:
             self.output.append(ERR(self._I2Cerror).msg)
             #self.I2C.init(pyb.I2C.SLAVE, addr=0x3e) #TODO hack?
-        self.decode()
+
 
     def receive(self):
         try:
@@ -39,37 +40,14 @@ class NASA:
     def decode(self):
         pass
 
-    # standard function to write data to UART
-    def send(self, output_buffer):
-        output_buffer.write(self.output)
-        self.output = []
-
     @staticmethod
     def mask(data, msk):
         if len(data) == len(msk):
             masked_data = bytearray()
-            for d, m in data, msk:
-                masked_data.append(d & m)
+            for x in range(0,len(data)):
+                masked_data.append(data[x] & msk[x])
 
             return masked_data
-
-    # redundant just check before delete
-    # @staticmethod
-    # def lowestSet(int_type):
-    #     low = int_type & -int_type
-    #     lowbit = -1
-    #     while low:
-    #         low >>= 1
-    #         lowbit += 1
-    #     return lowbit
-    #
-    # @staticmethod
-    # def bitCount(int_type):
-    #     count = 0
-    #     while int_type:
-    #         int_type &= int_type - 1
-    #         count += 1
-    #     return count
 
     @staticmethod
     def digitdecode(data, digitmask, digitcontrol):

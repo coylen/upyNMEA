@@ -193,3 +193,26 @@ class TiltCompCompass:
         else:
             magno_z = round(magno_z * self.scale, 4)
         return (magno_x, magno_y, magno_z)
+
+#test for scaling of LSM303
+
+def test():
+    a = TiltCompCompass(1)
+    a.lsm.setDeclination(0)
+    a.lsm.setContinuousMode()
+    valid = False
+    while valid == False:
+        b=a.getAxes()
+        print("Data {}".format(b))
+        valid = True
+        for x in b:
+            if x is None:
+                valid = False
+                if a.scale_reg < 7:
+                    a.scale_reg += 1
+                else:
+                    print("BUGGERED")
+
+    print(a.scale_reg)
+
+

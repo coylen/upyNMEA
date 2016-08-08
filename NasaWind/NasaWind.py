@@ -1,4 +1,4 @@
-from nasa import NASA
+from nasa_esp import NASA
 from nmeagenerator import VWR, ERR
 from machine import Pin
 
@@ -6,7 +6,7 @@ class NASAWind(NASA):
 
     _I2Cerror = "I2C failure when communicating with NASA WIND INSTRUMENT"
 
-    def __init__(self,, scl=Pin(5), sda=Pin(4)):
+    def __init__(self, scl=Pin(5), sda=Pin(4)):
         super().__init__(scl, sda)
         self.packet_size = 18 # increased in size for address
 
