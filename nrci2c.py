@@ -83,5 +83,5 @@ i2c.readfrom(0x3e, 1)
 
 #pyboard
 import pyb
-a=pyb.I2C(1,pyb.I2C.MASTER, baudrate=1000)
+a=pyb.I2C(1,pyb.I2C.MASTER, baudrate=100000)
 a.scan()

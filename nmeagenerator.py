@@ -161,6 +161,22 @@ class MDA(NMEASentence):
         self.msg = "$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
         super(MDA, self).__init__()
 
+    # RPM
+    # Revolutions
+    #         1  2   3    4   5   6
+    #         |  |   |    |   |   |
+    # $--RPM, a, x, x.x, x.x, A * hh
+    # 1) Source S = Shaft, E = Engine
+    # 2) Engine or shaft number
+    # 3) Speed, Revolutions per minute
+    # 4) Propeller pitch, % of maximum, "-" means astern
+    # 5) Status, A means data is valid
+    # 6) Checksum
+class RPM(NMEASentence):
+    def __init__(self,rpm):
+        self.msg =  "$ERRPM,E,1,{0},,A".format(rpm)
+
+
 #temporary class to allow saving of compass data which is sent to unit as blob
 class CMP(NMEASentence):
     def __init__(self, data):
