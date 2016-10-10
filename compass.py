@@ -5,7 +5,7 @@
 import pyb
 from mpu9250 import MPU9250
 from fusion import Fusion
-from nmeagenerator import HDG, CMP, ERR
+from nmeagenerator import HDG, CMP, ERR, XDR
 import LSM303
 import pickle
 i2c_object = None
@@ -254,7 +254,7 @@ class TCCompass_noLSM:
     def output(self):
 
         outstring = [CMP("1,{},{}".format(self.mag, self.hrp[0])).msg,
-                     HDG(self.hrp[0]).msg]
+                     HDG(self.hrp[0]).msg, XDR(self.hrp[2],self.hrp[1])]
         for x in range(0,2):
             outstring[x] = outstring[x].replace('(','')
             outstring[x] = outstring[x].replace(')','')

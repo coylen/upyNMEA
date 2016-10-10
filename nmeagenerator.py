@@ -8,9 +8,12 @@
 # Depth DBT/DPT
 # Barometric pressure MDA
 # Timestamp ZDA
+# RPM engine revs
+# TODO: XDR PTCH and ROLL
 #
 # Talker definition will be UP - microprocessor controller
-
+# With the exception of ER - Engine Room for RPM and WI - Weather instrument for MDA
+#
 # Base NMEA Sentence Class
 # used to append checksums in
 # sentence generation to avoid repetition
@@ -158,7 +161,7 @@ class DPT(NMEASentence):
 
 class MDA(NMEASentence):
     def __init__(self, pressure):
-        self.msg = "$UPMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
+        self.msg = "$WIMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
         super(MDA, self).__init__()
 
     # RPM
@@ -175,6 +178,22 @@ class MDA(NMEASentence):
 class RPM(NMEASentence):
     def __init__(self,rpm):
         self.msg =  "$ERRPM,E,1,{0},,A".format(rpm)
+
+# XDR - Transducer Measurement
+#         1 2   3 4            n
+#         | |   | |            |
+#  $--XDR,a,x.x,a,c--c, ..... *hh<CR><LF>
+# 1) Transducer Type
+# 2) Measurement Data
+# 3) Units of measurement
+# 4} Name of transducer
+# There may be any number of quadruplets like this, each describing a sensor.
+# The last field will be a checksum as usual.
+# prototype UPXDR,A,value,D,PTCH,A,value,D,ROLL*hh<CR><LF>
+class XDR(NMEASentence):
+    def __init__(self, pitch, roll):
+        self.msg = "UPXDR,A,{0},D,PTCH,A,{1},D,ROLL".format(pitch, roll)
+        super(CMP, self).__init__()
 
 
 #temporary class to allow saving of compass data which is sent to unit as blob
