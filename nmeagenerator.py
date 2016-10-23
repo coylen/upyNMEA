@@ -9,7 +9,7 @@
 # Barometric pressure MDA
 # Timestamp ZDA
 # RPM engine revs
-# TODO: XDR PTCH and ROLL
+# XDR PTCH and ROLL
 #
 # Talker definition will be UP - microprocessor controller
 # With the exception of ER - Engine Room for RPM and WI - Weather instrument for MDA
@@ -161,7 +161,7 @@ class DPT(NMEASentence):
 
 class MDA(NMEASentence):
     def __init__(self, pressure):
-        self.msg = "$WIMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure)
+        self.msg = "$WIMDA,,,{0},B,,,,,,,,,,,,,,,,".format(pressure/1000)
         super(MDA, self).__init__()
 
     # RPM
@@ -178,6 +178,7 @@ class MDA(NMEASentence):
 class RPM(NMEASentence):
     def __init__(self,rpm):
         self.msg =  "$ERRPM,E,1,{0},,A".format(rpm)
+        super(RPM, self).__init__()
 
 # XDR - Transducer Measurement
 #         1 2   3 4            n
@@ -193,7 +194,7 @@ class RPM(NMEASentence):
 class XDR(NMEASentence):
     def __init__(self, pitch, roll):
         self.msg = "UPXDR,A,{0},D,PTCH,A,{1},D,ROLL".format(pitch, roll)
-        super(CMP, self).__init__()
+        super(XDR, self).__init__()
 
 
 #temporary class to allow saving of compass data which is sent to unit as blob
@@ -205,7 +206,7 @@ class CMP(NMEASentence):
 class ERR(NMEASentence):
     def __init__(self, data):
         self.msg = "$MYERR,{0}".format(data)
-        super(CMP, self).__init__()
+        super(ERR, self).__init__()
 
 def checksum_calc(nmea_str):
     """ Loop through all of the given characters and xor the current to the
